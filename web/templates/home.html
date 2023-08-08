@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="{{ url_for('static', filename='js/d3-js/D3KBChart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/d3-js/Line.js') }}"></script>
+<script src="{{ url_for('static', filename='js/d3-js/Pie.js') }}"></script>
+<script src="{{ url_for('static', filename='js/d3-js/CJauge.js') }}"></script>
+<script src="{{ url_for('static', filename='js/d3-js/Timeline.js') }}"></script>
+<style>
+  .no-data-yet{
+
+  }
+  .card-info{
+    border-radius: 5px;
+    /*border: thin solid #ccc;*/
+    box-shadow: 1px 0px 3px 3px #eee
+  }
+
+  #main-jauge{
+    filter: drop-shadow(4px 4px 5px #eee);
+  }
+  #inner-circle{
+    filter: drop-shadow(4px 4px 20px #ccc);
+  }
+</style>
+<style>
+  .datepicker{font-size: 0.7rem}
+  .datepicker table th, .datepicker table td{width: auto!important}
+  .datepicker-days .picker-switch{ text-align: left}
+  .datepicker .old, .datepicker .new{ color: #ccc!important}
+  .datepicker{color: var(--dark)}
+  .datepicker .table td, .datepicker .table th {
+      border: 0;
+  }
+  .bootstrap-datetimepicker-widget table td.today:before{
+      border-bottom-color: var(--red);
+  }
+  .datepicker-days table td:hover, .bootstrap-datetimepicker-widget thead>tr:first-child th:hover,
+      .datepicker-months tbody span:hover, .datepicker-years tbody span:hover, .datepicker-decades tbody span:hover{
+      /*background: var(--info)!important;*/
+  }
+
+  .bootstrap-datetimepicker-widget .active, .bootstrap-datetimepicker-widget .active:hover{
+      background-color: var(--red)!important;
+  }
+  .this-week{
+      /*
+      border-top: thin solid #fff;
+      border-bottom: thin solid #fff;
+      */
+  }
+  .this-week td{
+      /*
+      color: #fff!important;
+      */
+  }
+  .today-btn{
+      background: var(--red)!important;
+      border-top: thin solid #eee;
+      color: #fff;
+      border-radius: 0 0 5px 5px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition-duration: 300ms;
+  }
+  today-btn:hover{
+      background: var(--orange);
+  }
+  #datetimepicker .disabled{
+    color: #ccc!important
+  }
+
+  svg text.hand{pointer-events: none;}
+
+  .time-line-svg{
+    border: thin solid #ccc;
+    border-radius: 5px;
+    background: #eee5;
+  }
+
+  .item-controller{
+    width: 40px;
+    height: 40px;
+    border-radius: 25px;
+    background: attr(--bg, blue);
+    border: thin solid #ccc;
+    margin-right: 5px;
+
+    display: flex;
+    justify-content: center; align-items: center;
+    transition-duration: 300ms;
+    cursor: pointer;
+  }
+  .item-controller:hover{
+    border-color: transparent;
+    box-shadow: 2px 0px 5px #ccc;
+  }
+
+</style>
+<div class="container">
+  <div style="min-height: 200px; width: 100%; padding-top: 20px;">
+    <div class="no-data-yet card-info">
+      <div><img src="{{ url_for('static', filename='images/check-circle.svg') }}" width="50">
+      <div id="show-filter">filter</div></div>
+    </div>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <div class="col-5">
+      <div id="chart-root" style="">
+        <svg width="400" height="400" viewBox="0 0 500 500" fill="#16213E">
+          <defs>
+            <linearGradient id="chart-bg">
+              <stop stop-color="rgb(231, 231, 243)" offset="0%"/>
+              <stop stop-color="rgb(243, 245, 248)"  offset="50%"/>
+              <stop stop-color="rgb(245, 246, 250)"  offset="100%"/>
+            </linearGradient>
+
+            <linearGradient id="linearColors" x1="0" x2="100%" y1="0" y2="100%">
+             <stop offset="5%" stop-color="var(--red)"></stop>
+             <stop offset="25%" stop-color="var(--pink)"></stop>
+             <stop offset="40%" stop-color="var(--purple)"></stop>
+             <stop offset="60%" stop-color="var(--indigo)"></stop>
+             <stop offset="80%" stop-color="var(--blue)"></stop>
+             <stop offset="100%" stop-color="var(--teal)"></stop>
+          </linearGradient>
+          </defs>
+          <g>
+            <path fill="#0000" id="main-jauge" d="M 20 250 A 230 230 0 0 1 20 250" stroke="var(--blue)" stroke-width="20" stroke-linecap="round"/>
+            <g>
+            <!-- echelle -->
+              <line x1="250" y1="250" x2="250" y2="5" stroke="#fff" stroke-width="10"/>
+              <path id="cover" d="" fill="url(#chart-bg)"/>
+
+              <text fill="var(--blue)" x="250" y="49" font-size="1.2rem" font-weight="500" dominant-baseline="middle" text-anchor="middle">50<tspan font-size="0.6rem" dy="-5px">%</tspan></text>
+            </g>
+            <g>
+              <circle id="inner-circle" r="150" cx="250" cy="250" fill="#fff"/>
+              <circle r="130" cx="250" cy="250" fill="#fff0" stroke="#ccc" stroke-dasharray="5" stroke-width="1"/>
+              <text class="main-value" font-weight="bold" font-size="5rem" x="250" y="250" dominant-baseline="middle" text-anchor="middle">500</text>
+              <text font-size="1rem" x="250" y="190" dominant-baseline="middle" text-anchor="middle" fill="#ccc">Chèques</text>
+              <g>
+                <path stroke-width="10" stroke-linecap="round" id="validate" d="M 120 250 A 130 130 0 0 0 380 250" fill="#0000" stroke="rgba(96, 226, 138, 5)"/>
+                <path stroke-width="10" stroke-linecap="round" id="reject" d="M 380 250 A 130 130 0 0 1 250 380" fill="#0000" stroke="var(--red)"/>
+              </g>
+
+              <!-- <path id="" d="m250 250 v 2.5 h-150 v17.5 l-40 -20 l40 -20 v17.5 h150 Z"/> -->
+
+              <path id="chart-aiguille" d="m250 250 m -150 2.5 v17.5 l-40 -20 l40 -20 v17.5  Z"/>
+
+              <g id="info-reject">
+                <path  id="reject-text-path" d="M 140 250 A 110 110 0 0 0 360 250" fill="#fff0"/>
+                <text font-size="0.6rem" fill="var(--red)" font-weight="500"><textPath class="info-text"
+                                dominant-baseline="middle" text-anchor="middle"
+                                startOffset="50%" href="#reject-text-path">Rejeté 100</textPath>
+                </text>
+                <circle r="10" cx="250" cy="250"  fill="#0000" />
+              </g>
+              <!--
+              <g id="info-reject">
+                <text fill="var(--red)" dominant-baseline="middle" text-anchor="middle"
+                      font-weight="500" x="250" y="360">
+                  Rejeté 100
+                </text>
+                <circle r="10" cx="250" cy="250" fill="#0000" />
+              </g>
+              -->
+              <g id="info-validate">
+                <path  id="validate-text-path" d="M 140 250 A 110 110 0 0 0 360 250" fill="#fff0"/>
+                <text font-size="0.6rem" fill="rgb(96, 226, 138)" font-weight="500"><textPath class="info-text"
+                                dominant-baseline="middle" text-anchor="middle"
+                                startOffset="50%" href="#validate-text-path">Validé 100</textPath>
+                </text>
+                <circle r="10" cx="250" cy="250"  fill="#0000" />
+              </g>
+
+            </g>
+
+          </g>
+          <g>
+            <circle class="point-end" r="15" fill="#fff" stroke="var(--blue)" stroke-width="7" />
+            <circle class="point-end" r="7" fill="var(--blue)"/>
+          </g>
+
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="bg-black" style="display:none; position: fixed;top:0; right: 0; width: 100%; height: 100%; background: rgb(0,0,0);
+background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%,  rgba(0,0,0,0.7) 100%);">
+  <div id="filter-container" class="hide-scroll col-md-3 col-4" style="border-radius: 15px 0 0 15px; background: #fff; position: absolute; right: 0; height: 100%; padding: 15px;">
+    <div style="width: 100%; padding-bottom: 5px; border-bottom: thin solid #ccc"><strong>Filtres</strong></div>
+    <div style="margin-bottom: 7px; margin-top: 5px;">
+      <div style="margin-bottom: -10px;"><strong >Date émission</strong></div>
+      <small style="color: #ccc; font-size: 10px;">Sélectionner une période</small>
+    </div>
+    <div>
+      <div id="datetimepicker" style="border-radius: 5px; border: thin solid #ccc"></div>
+    </div>
+
+    <div style="margin-bottom: 10px; margin-top: 15px;">
+      <div style="margin-bottom: -10px;">
+        <strong>Tranche de montant</strong>
+      </div>
+       <small style="color: #ccc; font-size: 10px;">Sélectionner une plage de montant</small>
+    </div>
+
+    <div style="width: 100%"><div id="price-range" style="width: 100%"></div></div>
+
+    <div class="form-row">
+      <div class="col">
+        <div style="border: thin solid #aaa; border-radius: 5px; padding: 5px">
+          <div style="font-size: 10px; color:#aaa; margin-top: -5px">Min. Prix (XOF)</div>
+          <input type="number" class="price-value" id="price-min-value" style="outline: none; border: none; width: 100%">
+        </div>
+      </div>
+      <div class="col">
+        <div style="border: thin solid #aaa; border-radius: 5px; padding: 5px">
+          <div style="font-size: 10px; color:#aaa; margin-top: -5px">Max. Prix (XOF)</div>
+          <input type="number" class="price-value" id="price-max-value" style="outline: none; border: none; width: 100%">
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 10px; margin-top: 15px;">
+      <div style="margin-bottom: -10px;">
+        <strong>Contrôleur</strong>
+      </div>
+       <small style="color: #ccc; font-size: 10px;">Les contrôleurs disponibles</small>
+    </div>
+    <div>
+      <div class="hide-scroll" style="display: flex">
+        <div class="item-controller" title="Boris Kanga">BK</div>
+        <div class="item-controller" title="Elie Mian">EM</div>
+        <div class="item-controller">MA</div>
+      </div>
+    </div>
+
+
+
+  </div>
+
+</div>
+
+<script>
+  let jauge = new CJauge();
+  $("#cover").attr("d", "M 250 250 L" +[250-220*Math.cos(Math.PI + Math.PI/6), 250 - 220*Math.sin(Math.PI + Math.PI/6)] +
+                        "A 220 220 0 1 0 " +
+                        [250-220*Math.cos(2*Math.PI - Math.PI/6), 250 - 220*Math.sin(2*Math.PI - Math.PI/6)]
+                        + " Z"
+                        )
+  $(document).ready(()=>{
+    update_jauge({nb: 100, total: 500, reject: 10});
+  });
+  // M 20 250 A 230 230 0 0 1 480 250
+  function update_jauge(value){
+    jauge.update(value);
+  }
+</script>
+
+<script>
+  $(document).ready(()=>{
+    let price_range = null;
+    let CURRENT_DATE = new Date(); // last check day data receive
+
+    // datetimepicker
+    $("#datetimepicker").datetimepicker({
+        format: 'YYYY-MM-DD',
+        defaultDate: CURRENT_DATE,
+        inline: true,
+        sideBySide: true,
+        locale: "fr",
+        minDate: "2023-07-01",
+        maxDate: CURRENT_DATE
+    });
+    // btn today
+    let today_btn = $("<div>").addClass("today-btn").html("Dernier jour");
+    $("#datetimepicker .show .datepicker-days").append(today_btn);
+    let last = $(".datepicker-days .picker-switch").next().remove().html("&#9654;").removeClass("disabled");
+
+    $(".datepicker-days .picker-switch").parent()
+        .append($(".datepicker-days .picker-switch")
+            .html(capitalize_text($(".datepicker-days .picker-switch").html())).prev().remove().html("&#9664;"))
+        .append(last);
+
+    function _format_picker(){
+        let month = capitalize_text($(".datepicker-days .prev").html());
+        $(".datepicker-days .picker-switch").html(month);
+        $(".datepicker-days .prev").html("&#9664;");
+        $(".datepicker-days .next").removeClass("disabled");
+    }
+
+    $("#datetimepicker").on("change.datetimepicker", function (e) {
+        _format_picker();
+     });
+    $("#datetimepicker").on("update.datetimepicker", function (e) {
+        _format_picker();
+    });
+
+    $(".datepicker").on("click", ".active, .day:not(.disabled)", (e)=>{
+        let target = $(e.target);
+        if (target.is(".day.active") && $(".datepicker .selected-range").length == 0){
+          e.preventDefault(); e.stopPropagation(); return true;
+        }
+        /*
+        if (target.is(".day:not(.disabled)"){
+          if (ctrlDown){
+            console.log("here")
+            e.preventDefault(); e.stopPropagation(); return true;
+          }
+        }
+        */
+
+    });
+
+    $(today_btn).click(()=>{
+        $("#datetimepicker").data("datetimepicker").date(CURRENT_DATE);
+        if (/\w/.exec($(".datepicker-days .prev").html())){
+            _format_picker();
+         }
+    });
+
+    // price
+    $(".price-value").change((e)=>{
+      if (parseFloat($("#price-min-value").val()) >= parseFloat($("#price-max-value").val())){
+        $("#price-min-value").val($("#price-max-value").val());
+      }
+      price_range.set_value({minValue: $("#price-min-value").val(), maxValue: $("#price-max-value").val()});
+    });
+
+    $("#show-filter").click(()=>{
+      $("#bg-black").show();
+      if (price_range===null){
+        price_range = new Timeline("#price-range", {
+          on_change: (value)=>{$("#price-max-value").val(Math.round(value.maxValue)); $("#price-min-value").val(Math.round(value.minValue)); },
+          on_drag: (value)=>{$("#price-max-value").val(Math.round(value.maxValue)); $("#price-min-value").val(Math.round(value.minValue)); }
+        });
+      }
+      $("#filter-container").css("right", -$("#filter-container").width());
+      $({slide:-$("#filter-container").width()}).animate({slide:0},
+        {
+          duration: 500,
+          step: (now, fx)=>{
+              $("#filter-container").css("right", now);
+          }
+      });
+
+    });
+
+    $("#bg-black").click((e)=>{
+      let where = where_is_click_on(e, ["#bg-black", "#filter-container"], retrieve=true);
+      if (!$(where).is("#filter-container")){
+        console.log("closing filter");
+        $("#bg-black").fadeOut(100);
+      }
+    });
+
+  });
+</script>
+{% endblock %}

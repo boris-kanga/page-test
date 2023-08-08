@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+  html{
+    height: 100%;
+    overflow: hidden;
+  }
+  body{
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+  }
+  .fp-watermark{display: none!important}
+  #fullpage{width: 100%; height: 100%}
+  .section{width: 100%; height: 100%}
+</style>
+<div id="fullpage" style="touch-action: none">
+  <div class="section" style="background: blue">Test</div>
+  <div class="section" style="background: green">TEST 2</div>
+</div>
+
+<!--
+<script src="{{ url_for('static', filename='js/fullpage.min.js') }}"></script>
+
+<script>
+  $(document).ready(()=>{
+    let FullPage = new fullpage('#fullpage', {
+        sectionsColor: ['#1bbc9b', '#4BBFC3', '#7BAABE', '#435b71', 'orange', 'blue', 'purple', 'yellow', '#435b71', 'orange', 'blue', 'purple', 'yellow' ],
+        anchors: ['1', '2'],
+        controlArrows: false,
+        navigation: true,
+        slidesNavigation: true
+    });
+  })
+</script>
+-->
+<script>
+  $("body").on("scroll", (e)=>{
+    console.log(e);
+  })
+
+  window.onscroll = (e)=>{console.log(e)}
+  window.addEventListener('scroll', function(){ console.log("ok") }, true)
+</script>
+{% endblock %}

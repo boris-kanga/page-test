@@ -1,0 +1,33 @@
+input{box-sizing:border-box; -moz-box-sizing:border-box;}
+
+.hide-scroll{
+	overflow-x:auto;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: #aaa  #ddd;
+}
+.hide-scroll::-webkit-scrollbar {
+	position: absolute;
+	bottom: 0px;
+	right: 0px;
+    height: 3px;
+    width: 3px;
+    background: var(--s-color, #FFF0);
+}
+.hide-scroll::-webkit-scrollbar-button{
+	background-color: transparent;
+	height: 2px;
+	width: 5px;
+}
+.hide-scroll::-webkit-scrollbar-track {
+  background: #f1f1f100;
+  border-radius: 100%;
+}
+.hide-scroll-show::-webkit-scrollbar-thumb{
+	background: #CCC;
+}
+.hide-scroll::-webkit-scrollbar-thumb:hover {
+  background: #CCC;
+}
+object{display:none}
+.center-container{display: flex!important; align-items:center; justify-content:center}

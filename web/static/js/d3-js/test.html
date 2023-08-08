@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>TEST</title>
+</head>
+<body>
+
+	<div id="target"></div>
+	<script src="https://d3js.org/d3.v7.min.js"></script>
+
+
+	<script src="D3KBChart.js"></script>
+	<script src="CBar.js"></script>
+
+
+	<script>
+		
+		new CBar("#target", {
+			"origin": {name: "Rev Dec 2021", value: 29946637},
+			evolutions: [
+				{
+					dx: [ 
+						{name: "SMS On net", value: 3659037}, 
+						{name:"SMS off net", value: -277535}, 
+						{name:"Voix payg", value: -399553}, 
+						{name:"SVA", value: -5500}
+
+					],
+					result: "Rev Dec 2022"
+				}
+			]
+
+		})
+
+	</script>
+
+
+</body>
+</html>
