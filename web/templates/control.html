@@ -320,7 +320,11 @@
       <div class="col-8" style="height: 100%; --check-size: 60%">
         <div class="row" style="height: var(--check-size)">
           <div class="col-12" style="height: 100%">
+
             <div style="--bg: var(--dark-blue); display: flex; justify-content:center; align-items: center; position: relative;background: var(--bg); padding: 5px; border-radius: 5px; box-shadow: 3px 4px 5px #999; width: 100%; height: 100%;">
+              <div style="position: absolute; bottom: 0; right: 0; z-index: 100;">
+                <img src="{{ url_for('static', filename='images/fraud_tag.png') }}" width="150"/>
+              </div>
               <div id="check-image-to-scroll" style="position: absolute; overflow: hidden;width: calc(100% - 5px); height: calc(100% - 5px)">
                 <div style="display: flex; width: 200%; height: 100%; ">
                   <img src="" alt="Image check recto" id="check-image-recto" style="width: 50%; height: 100%; border-radius: 5px;">
