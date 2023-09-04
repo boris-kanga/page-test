@@ -2,7 +2,6 @@
 
 {% block content %}
 
-<script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="{{ url_for('static', filename='js/d3-js/D3KBChart.js') }}"></script>
 <script src="{{ url_for('static', filename='js/d3-js/Line.js') }}"></script>
 <script src="{{ url_for('static', filename='js/d3-js/Pie.js') }}"></script>
@@ -101,12 +100,44 @@
   }
 
 </style>
+
+<style>
+
+  .day.selected-range{
+    background: var(--sgci-red, var(--red));
+  }
+  .day ~ .day.selected-range{
+    border-radius: 0;
+  }
+  .day.selected-range:first-child{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .day:not(.selected-range) + .day.selected-range{
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+  }
+  .day.selected-range.end-range{
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+  }
+  .day.selected-range:last-child{
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+  }
+</style>
 <div class="container">
   <div style="min-height: 200px; width: 100%; padding-top: 20px;">
     <div class="no-data-yet card-info">
       <div><img src="{{ url_for('static', filename='images/check-circle.svg') }}" width="50">
-      <div id="show-filter">filter</div></div>
+      <div id="show-filter">filter</div>
+        <div id="show-popup">popup</div>
+      </div>
+
+
     </div>
+
+
   </div>
 
   <div style="margin-top: 20px;">
@@ -248,6 +279,46 @@ background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%,  rgba(0,0,0,0.7) 100%);">
 
 </div>
 
+<div id="popup-container" style="position: fixed;top:0; right: 0; width: 100%; height: 100%; background: rgb(0,0,0);
+background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%,  rgba(0,0,0,0.7) 100%); display: flex; justify-content: center; align-items: center">
+
+  <div style="background: white; min-width: 400px; --bg: #aaa4; border-radius: 4px">
+    <header style="background: var(--bg); padding: 30px 15px 15px 15px">
+      <div style="display: flex; flex-wrap: no-wrap">
+        <div class="col" data-action="typing">
+          Typage
+        </div>
+        <div class="col" data-action="config">Config.</div>
+        <div class="col" data-action="validate">Validation</div>
+      </div>
+    </header>
+
+    <div style="padding: 15px;">
+      <div class="step active" data-step="typage">
+        <div id="distribution-range-date">
+
+        </div>
+        <div>
+          <small>Type de chèque</small>
+
+          <div style="display: flex ">
+            <div>Caisse</div>
+            <div>Compense</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--bg); padding: 15px; display: flex; align-items: center; justify-content: space-between">
+      <div></div>
+      <div>
+        <button class="btn btn-light">Retour</button>
+        <button class="btn btn-primary">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   let jauge = new CJauge();
   $("#cover").attr("d", "M 250 250 L" +[250-220*Math.cos(Math.PI + Math.PI/6), 250 - 220*Math.sin(Math.PI + Math.PI/6)] +
@@ -279,6 +350,8 @@ background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%,  rgba(0,0,0,0.7) 100%);">
         minDate: "2023-07-01",
         maxDate: CURRENT_DATE
     });
+
+
     // btn today
     let today_btn = $("<div>").addClass("today-btn").html("Dernier jour");
     $("#datetimepicker .show .datepicker-days").append(today_btn);
@@ -325,6 +398,19 @@ background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%,  rgba(0,0,0,0.7) 100%);">
             _format_picker();
          }
     });
+
+    function set_date_range(list_of_day){
+      let temp_list_of_day = [];
+      list_of_day.forEach((day)=> {
+        day = new myCustomDate(day);
+        temp_list_of_day.push(day.toShow());
+        temp_list_of_day.push(day.isoShow());
+      });
+      $(".day").filter((i, elm)=>temp_list_of_day.includes($(elm).attr("data-day"))).addClass("selected-range");
+      $("#datetimepicker .day.end-range").removeClass("end-range");
+      $("#datetimepicker .selected-range").next().filter((i, elm)=>!$(elm).is(".selected-range")).prev().addClass("end-range");
+    }
+    set_date_range(["2023-08-01", "2023-08-02", "2023-08-07", "2023-07-31"]);
 
     // price
     $(".price-value").change((e)=>{

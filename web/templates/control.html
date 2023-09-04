@@ -1,47 +1,858 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+  body{
+    --dark-blue: #020235;
+    --sgci-blue: #020235;
+    --dark-blue: #000;
+  }
+  #back{
+    text-decoration: none;
+    --bg: var(--dark);
+    transition-duration: 300ms;
+  }
+  #back:hover{
+    --bg: var(--red);
+  }
+  #btn-switch-recto-verso{
+    padding: 3px 3px 0 3px;
+    border-radius: 5px 5px 0 0;
+    position: absolute; top: -19.5px; right: 10px;
+    background: var(--bg);
+    color: #ccc;
+    display: flex;
+
+  }
+  #btn-switch-recto-verso div{
+    padding: 0 5px 0 5px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 5px;
+    color: #555
+  }
+  #btn-switch-recto-verso div:hover{
+    background: #f345;
+    color: #ccc;
+  }
+  #btn-switch-recto-verso div.active{
+    background: #f34a;
+    border-radius: 5px 5px 0 0;
+    color: #fff
+  }
+</style>
 
 <style>
-  html{
+  .card{
+    border-radius: 5px;
+    box-shadow: 3px 4px 5px #999;
     height: 100%;
-    overflow: hidden;
-  }
-  body{
     position: relative;
-    overflow: hidden;
-    height: 100%;
+    background: linear-gradient(var(--dark-blue), #020225);
+    color: #fff;
+
   }
-  .fp-watermark{display: none!important}
-  #fullpage{width: 100%; height: 100%}
-  .section{width: 100%; height: 100%}
+  .card .card-title{
+    --bg: var(--red);
+    color: var(--bg);
+    border-top: thin solid #fff;
+    padding: 2px;
+    margin: 0;
+    font-size: 0.6rem;
+    font-weight: bold;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 20px;
+    display: flex; align-items: center; justify-content: center;
+
+  }
+  .card .card-title> *:first-child{
+    margin-right: 5px;
+  }
+  .card .card-content{
+    height: calc(100% - 20px);
+  }
+  .card .card-content .tag{
+    background: gold;
+    color: #fff;
+    font-size: 0.5rem;
+    border-radius: 5px;
+    padding: 0 5px;
+    position: relative;
+    top: -2px; left: 10px;
+    max-height: 13px;
+
+  }
+  .card .card-content .line{
+    padding: 7px;
+    font-size: 0.8rem;
+    color: #ddd;
+    font-weight: 500;
+    display: flex;
+    position: relative;
+  }
+  .card .card-content .line:not(:last-child){
+    border-bottom: thin solid #555;
+  }
+  .card .card-content .line .icon{
+    --bg: #555;
+    --size: 20px;
+    display: inline-block;
+    color: var(--bg);
+    width: var(--size); height: var(--size);
+    margin-right: 5px;
+  }
+  .card .card-content .line .icon svg{
+    width: calc(var(--size) - 3px);
+  }
+  .card .card-content .line small{
+    color: #555;
+    font-size: 0.6rem;
+    position: relative;
+    top: -5px;
+    display: block;
+    margin-bottom: -5px;
+  }
+  .item-check{
+    width: 60px;
+    height: 40px;
+    background: #fff;
+    border-radius: 3px;
+    margin-right: 5px;
+    overflow: hidden;
+    margin-top: 5px;
+    cursor: pointer;
+  }
+  .item-check img{
+    width:100%;
+    height:100%;
+
+  }
+  .item-check:hover{
+    transform: scale(1.05);
+  }
+  #check-info-back, #check-info-next{
+    cursor: pointer;
+    z-index: 100;
+    opacity: 0.5
+  }
+  #check-info-back:hover, #check-info-next:hover{
+    opacity: 1;
+  }
+  #last_check_receive_date{
+    text-decoration: none;
+    color: #ddd;
+  }
+  #last_check_receive_date:hover{
+    text-decoration: underline
+  }
+  #panel-title{
+    position: relative;
+  }
+  #panel-title:after{
+    content: "";
+    width: 20px; height: 4px; border-radius: 2px;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    background: var(--red);
+  }
+  #control-container{
+    position: relative;
+  }
+  #control-container:before{
+    content: "";
+    display: flex;
+    width: 3px;
+    height: 150%;
+    position: absolute;
+
+    z-index: 0;
+    background: #aaa5;
+    left: 8px; top: 0;
+  }
+  .item-control{
+    padding: 10px;
+    background: var(--bg, #fff);
+    box-shadow: 3px 4px 4px #ccc;
+    position: relative;
+    z-index: 1000;
+    cursor: pointer;
+    opacity: 0.8;
+    color: #ccc;
+    border-radius:5px;
+  }
+  .item-control:not(:last-child){
+    margin-bottom: 10px;
+  }
+
+  .item-control:before{
+    content: "\0025C4";
+    color: var(--bg, #fff);
+    font-size: 15px;
+    position: absolute; left: -12px;
+    z-index: 1;
+
+  }
+  .item-control:after{
+    content: "?";
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: #ccc;
+    color: #fff;
+    position: absolute; left: -28px; top: 13px;
+    display: flex; justify-content:center; align-items: center;
+    font-size: 8px;
+
+  }
+
+  .item-control:not(.open) .content{
+    display:none;
+  }
+  .item-control.open{
+    opacity: 1;
+    color: var(--dark);
+  }
+  .item-control .check-data{
+    color: var(--sgci-blue);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .btn-check>div{
+    padding: 5px 10px;
+    position: relative;
+    padding-left: 30px;
+    display: flex; align-items: center;
+    background: var(--light);
+    color: var(--bg);
+    cursor: pointer;
+    margin-right: 10px;
+    border-radius: 5px;
+    border: thin solid var(--bg);
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+
+  }
+  .btn-check>div:hover{
+    color: #fff;
+    background: var(--bg);
+
+  }
+  .btn-check .good:before{
+    content: "\002714";
+    color: var(--bg);
+    position: absolute;
+    left: 10px;
+
+  }
+  .btn-check .bad:before{
+    content: "\2715";
+    color: var(--bg);
+    font-weight: 700;
+    position: absolute;
+    text-shadow: 0 0 2px #000;
+    left: 10px;
+  }
+  .btn-check .good{
+    --bg: #7dd97f;
+    --light: #d0f5d8;
+
+  }
+  .btn-check .bad{
+    --bg: red;
+    --light: #EAA;
+  }
+
+  .check-data, .btn-check{
+    margin-bottom: 5px;
+  }
+
+  .btn-check>div.active{
+    background: var(--bg);
+    color: #fff;
+  }
+  .item-control.red .btn-check>div:not(.active), .item-control.green .btn-check>div:not(.active){
+    background: #fff0; border-color: #eee;
+    color: var(--bg);
+  }
+  .item-control.red:after{
+    content: "\2715";
+    color: red;
+    background: #EAA;
+  }
+  .item-control.green:after{
+    content: "\2714";
+    color: #7dd97f;
+    background: #d0f5d8;
+  }
+  .item-control.green{
+    --bg: #d0f5d8;
+    color: #7dd97f
+  }
+  .item-control.red{
+    --bg: #EAA;
+    color: red;
+  }
+
 </style>
-<div id="fullpage" style="touch-action: none">
-  <div class="section" style="background: blue">Test</div>
-  <div class="section" style="background: green">TEST 2</div>
+<div style="width: 100%; height: 100%; padding: 10px;">
+  <div style="background: #0001; border-radius: 5px; width: 100%; height: 100%; border-radius: 5px; padding: 15px;">
+
+    <div style="display: flex; justify-content: space-between">
+      <div></div>
+      <div>
+        <div style="border-radius: 50%; --size: 30px; height: var(--size); width: var(--size); background: #fff; box-shadow: 3px 0px 3px #ccc"></div>
+      </div>
+    </div>
+
+    <a href="#" id="back" style="display: inline-flex; align-items: center; margin-bottom: 15px;">
+      <svg width="30" viewBox="0 0 24 24" fill="none" >
+        <path d="M4 10L3.29289 10.7071L2.58579 10L3.29289 9.29289L4 10ZM21 18C21 18.5523 20.5523 19 20 19C19.4477 19 19
+              18.5523 19 18L21 18ZM8.29289 15.7071L3.29289 10.7071L4.70711 9.29289L9.70711 14.2929L8.29289 15.7071Z
+              M3.29289 9.29289L8.29289 4.29289L9.70711 5.70711L4.70711 10.7071L3.29289 9.29289ZM4 9L14 9L14 11L4 11L4
+              9ZM21 16L21 18L19 18L19 16L21 16ZM14 9C17.866 9 21 12.134 21 16L19 16C19 13.2386 16.7614 11 14 11L14 9Z"
+              fill="var(--bg)"/>
+      </svg>
+      <span style="margin-left: 10px; color:var(--bg)">Historique</span>
+    </a>
+    <div class="row" style="height: calc(100% - 75px); position: relative;">
+      <div class="col-8" style="height: 100%; --check-size: 60%">
+        <div class="row" style="height: var(--check-size)">
+          <div class="col-12" style="height: 100%">
+            <div style="--bg: var(--dark-blue); display: flex; justify-content:center; align-items: center; position: relative;background: var(--bg); padding: 5px; border-radius: 5px; box-shadow: 3px 4px 5px #999; width: 100%; height: 100%;">
+              <div id="check-image-to-scroll" style="position: absolute; overflow: hidden;width: calc(100% - 5px); height: calc(100% - 5px)">
+                <div style="display: flex; width: 200%; height: 100%; ">
+                  <img src="" alt="Image check recto" id="check-image-recto" style="width: 50%; height: 100%; border-radius: 5px;">
+                  <img src="" alt="Image check verso" id="check-image-verso" style="width: 50%; height: 100%; border-radius: 5px;">
+                </div>
+              </div>
+              <div id="btn-switch-recto-verso">
+                <div class="active" data-role="recto">Recto</div>
+                <div data-role="verso">Verso</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div id="info-check" class="form-row" style="position: relative; overflow-x: hidden; overflow-y: visible; align-items: center; margin-top: 15px; height: calc(100% - var(--check-size) - 15px); flex-wrap: nowrap">
+
+          <div id="check-info-back" style="color: #fff; font-size: 1rem; padding: 5px 7px; background: #000A; position: sticky; left: 0px; border-radius: 5px;">
+            &#9666;
+          </div>
+
+          <div class="col-4" style="height: 100%">
+            <div class="card">
+              <div class="card-content hide-scroll">
+                <div class="line">
+                    <span class="icon" style="font-style: italic; ; font-size: 0.7rem; position: relative; top: 2px;">#ID&nbsp;</span>
+                    <span id="client_id">6399300</span>
+                    <span class="tag" id="client-segment">Particulier</span>
+                </div>
+                <div class="line">
+                  <span class="icon"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
+                          stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z"
+                          stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg></span>
+
+                  <span id="client_name">
+                    KANGA Boris Parfait
+                  </span>
+                </div>
+
+                <div class="line">
+                  <span class="icon">
+                    <svg width="15" viewBox="0 0 218.582 218.582">
+                      <path fill="var(--bg)" d="M160.798,64.543c-1.211-1.869-2.679-3.143-4.046-4.005c-0.007-2.32-0.16-5.601-0.712-9.385
+                              c0.373-4.515,1.676-29.376-13.535-40.585C133.123,3.654,122.676,0,112.294,0c-8.438,0-16.474,
+                              2.398-22.629,6.752 c-5.543,3.922-8.596,8.188-10.212,11.191c-4.78,0.169-14.683,2.118-19.063,
+                              14.745c-4.144,11.944-0.798,19.323,1.663,22.743 c-0.161,1.978-0.219,3.717-0.223,5.106c-1.367,
+                              0.862-2.835,2.136-4.046,4.005c-2.74,4.229-3.206,9.9-1.386,16.859 c3.403,13.012,11.344,15.876,
+                              15.581,16.451c2.61,5.218,8.346,15.882,14.086,21.24c2.293,2.14,5.274,3.946,8.86,5.37 c4.577,
+                              1.816,9.411,2.737,14.366,2.737s9.789-0.921,14.366-2.737c3.586-1.424,6.567-3.23,8.86-5.37
+                              c5.74-5.358,11.476-16.022,14.086-21.24c4.236-0.575,12.177-3.44,15.581-16.452C164.004,74.443,
+                              163.538,68.771,160.798,64.543z M152.509,78.871c-2.074,7.932-5.781,9.116-7.807,9.116c-0.144,
+                              0-0.252-0.008-0.316-0.013c-2.314-0.585-4.454,0.631-5.466,2.808 c-1.98,4.256-8.218,16.326
+                              -13.226,21.001c-1.377,1.285-3.304,2.425-5.726,3.386c-6.796,2.697-14.559,2.697-21.354,0
+                              c-2.422-0.961-4.349-2.101-5.726-3.386c-5.008-4.675-11.246-16.745-13.226-21.001c-0.842-1.81
+                              -2.461-2.953-4.314-2.953 c-0.376,0-0.762,0.047-1.153,0.146c-0.064,0.006-0.172,0.013-0.315,
+                              0.013c-2.025,0-5.732-1.185-7.807-9.115 c-1.021-3.903-1.012-7.016,0.024-8.764c0.603-1.016,
+                              1.459-1.358,1.739-1.446c2.683-0.291,4.299-2.64,4.075-5.347 c-0.005-0.066-0.18-2.39,
+                              0.042-5.927c3.441-1.479,8.939-4.396,13.574-9.402c2.359-2.549,4.085-5.672,5.314-8.537
+                              c3.351,2.736,8.095,5.951,14.372,8.729c10.751,4.758,32.237,7.021,41.307,7.794c0.375,4.317,
+                              0.156,7.263,0.15,7.333 c-0.236,2.715,1.383,5.066,4.075,5.357c0.28,0.088,1.136,0.431,
+                              1.739,1.446C153.521,71.856,153.53,74.969,152.509,78.871z M184.573,145.65l-43.715-17.485c
+                              -1.258-0.502-2.665-0.473-3.903,0.08c-1.236,0.555-2.195,1.588-2.655,2.862l-10.989,30.382
+                              l-2.176-6.256l3.462-8.463c0.63-1.542,0.452-3.297-0.477-4.681c-0.929-1.383-2.485-2.213
+                              -4.151-2.213H98.614 c-1.666,0-3.223,0.83-4.151,2.213c-0.929,1.384-1.107,3.139-0.477,
+                              4.681l3.462,8.463l-2.176,6.256l-10.989-30.382 c-0.46-1.274-1.419-2.308-2.655-2.862c
+                              -1.238-0.554-2.646-0.583-3.903-0.08L34.009,145.65 c-13.424,5.369-22.098,18.182-22.098,
+                              32.641v35.291c0,2.762,2.239,5,5,5h184.76c2.761,0,5-2.238,5-5v-35.291 C206.671,163.832,
+                              197.997,151.02,184.573,145.65z M183.054,192.718c0,2.762-2.239,5-5,5h-33.57c-2.761,0-5-2.238
+                              -5-5v-15.59 c0-2.762,2.239-5,5-5h33.57c2.761,0,5,2.238,5,5V192.718z"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <small>Gestionnaire de compte</small>
+                    <div id="account_manager_code">055</div>
+                    <div><a href="mailto:kanga07@hotmail.fr" id="account_manager_mail">kanga07@hotmail.fr</a></div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="card-title">
+                <svg width="15" viewBox="0 0 1024 1024" fill="var(--bg)" >
+                  <path d="M110.4 923.2c-56.8 0-102.4-48-102.4-106.4V285.6c0-58.4 45.6-106.4 102.4-106.4h800.8c56.8 0
+                          102.4 48 102.4 106.4V816c0 58.4-45.6 106.4-102.4 106.4H110.4z m0-701.6c-34.4 0-61.6 28.8-61.6
+                          64V816c0 35.2 28 64 61.6 64h800.8c34.4 0 61.6-28.8 61.6-64V285.6c0-35.2-28-64-61.6-64H110.4z"/>
+                  <path d="M541.6 392c-12.8 0-23.2-10.4-23.2-24s10.4-24 23.2-24h328c12.8 0 23.2 10.4 23.2 24s-10.4 24
+                          -23.2 24h-328zM541.6 511.2c-12.8 0-23.2-10.4-23.2-24s10.4-24 23.2-24h328c12.8 0 23.2 10.4 23.2
+                           24s-10.4 24-23.2 24h-328zM541.6 638.4c-12.8 0-23.2-10.4-23.2-24s10.4-24 23.2-24h276.8c12.8 0
+                           23.2 10.4 23.2 24s-10.4 24-23.2 24H541.6zM58.4 886.4c-2.4 0-4.8 0-7.2-0.8-12.8-4-20-18.4-16
+                           -32 23.2-78.4 77.6-142.4 148-176l16-8-13.6-12c-40-34.4-63.2-85.6-63.2-139.2 0-100 78.4-180.8
+                           173.6-180.8 96 0 173.6 80.8 173.6 180.8 0 53.6-23.2 104.8-63.2 139.2l-13.6 12 16 8c68 32 132.8
+                           112 157.6 194.4 16 52.8-16.8 36-1.6 16-3.2 4.8-16.8-5.6-32-5.6-12.8 0-19.2 24.8-19.2 22.4-31.2
+                           -104-120.8-203.2-217.6-203.2-99.2 0-186.4 67.2-216 166.4-1.6 11.2-11.2 18.4-21.6 18.4z m239.2
+                           -498.4c-69.6 0-126.4 58.4-126.4 130.4s56.8 130.4 126.4 130.4c69.6 0 126.4-58.4 126.4-130.4
+                           -0.8-72-56.8-130.4-126.4-130.4z"/>
+                </svg>
+                <span>Info. Client</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-4" style="height: 100%">
+            <div class="card">
+              <div class="card-content hide-scroll">
+                <div class="line">
+                  <span class="icon">
+
+                    <svg viewBox="0 0 24 24"  fill="var(--bg)">
+                      <path d="M6,22H18a3,3,0,0,0,3-3V7a2,2,0,0,0-2-2H17V3a1,1,0,0,0-2,0V5H9V3A1,1,0,0,0,7,3V5H5A2,2,0,0
+                              ,0,3,7V19A3,3,0,0,0,6,22ZM5,12.5a.5.5,0,0,1,.5-.5h13a.5.5,0,0,1,.5.5V19a1,1,0,0,1-1,1H6a1,
+                              1,0,0,1-1-1Z"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <small>Dernière date d'émission</small>
+                    <div id="last_check_date">08/07/2023</div>
+                  </div>
+                </div>
+                <div class="line">
+                  <span class="icon">
+                    <svg fill="var(--bg)" viewBox="0 0 1920 1920" >
+                      <path d="M1064.719 308.99 0 959.644 1064.719 1610.3v-522.363l855.174 521.829V309.524L1064.72 831.246z"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <small style="top: 0; margin: 0">Chèques antérieur</small>
+
+                    <div id="last-check-container" style="display: flex; margin-top: 10px; flex-wrap: wrap;">
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="card-title">Chèques Anté.</div>
+            </div>
+          </div>
+          <div class="col-4" style="height: 100%">
+            <div class="card">
+              <div class="card-content hide-scroll" id="amount-chart-card">
+                <div class="line">
+                  <span class="icon" style="font-weight: 500; font-size: 0.5rem; font-family: CMSY10, CMEX10, Symbol, Times; font-style: normal;">
+                    (&nbsp;,&nbsp;)
+                  </span>
+                  <div>
+                    <small style="margin-bottom: 0">Evolution binôme Client - Bénéficiaire</small>
+                    <div id="evo-client-receiver"></div>
+                  </div>
+                </div>
+
+                <div class="line">
+                  <span class="icon" style="font-style: italic">&forall;</span>
+                  <div>
+                    <small style="margin-bottom: 0">Tendance générale</small>
+                    <div id="evo-client-global"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-title">Montant</div>
+            </div>
+          </div>
+          <div class="col-4" style="height: 100%">
+            <div class="card">
+              <div class="card-content hide-scroll">
+                <div class="line">
+                    <span class="icon" style="font-style: italic; ; font-size: 0.7rem; position: relative; top: 2px;">#</span>
+                    <div>
+                      <small>Numéro de compte du bénéficiaire</small>
+                      <span id="beneficiary_account_number">6399300</span>
+                    </div>
+                </div>
+                <div class="line">
+                  <span class="icon"><svg viewBox="0 0 24 24" fill="none">
+                    <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
+                          stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z"
+                          stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg></span>
+
+                  <span id="beneficiary_name">
+                  </span>
+                </div>
+
+                <div class="line">
+                  <span class="icon">
+
+                    <svg viewBox="0 0 24 24"  fill="var(--bg)">
+                      <path d="M6,22H18a3,3,0,0,0,3-3V7a2,2,0,0,0-2-2H17V3a1,1,0,0,0-2,0V5H9V3A1,1,0,0,0,7,3V5H5A2,2,0,0
+                              ,0,3,7V19A3,3,0,0,0,6,22ZM5,12.5a.5.5,0,0,1,.5-.5h13a.5.5,0,0,1,.5.5V19a1,1,0,0,1-1,1H6a1,
+                              1,0,0,1-1-1Z"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <small>Date de création compte</small>
+                    <div id="beneficiary_account_created_date">08/07/2023</div>
+                  </div>
+                </div>
+                <div class="line">
+                  <span class="icon">
+
+                    <svg viewBox="0 0 24 24"  fill="var(--bg)">
+                      <path d="M6,22H18a3,3,0,0,0,3-3V7a2,2,0,0,0-2-2H17V3a1,1,0,0,0-2,0V5H9V3A1,1,0,0,0,7,3V5H5A2,2,0,0
+                              ,0,3,7V19A3,3,0,0,0,6,22ZM5,12.5a.5.5,0,0,1,.5-.5h13a.5.5,0,0,1,.5.5V19a1,1,0,0,1-1,1H6a1,
+                              1,0,0,1-1-1Z"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <small>Dernier chèque reçu</small>
+                    <a title="Consulter le chèque" id="last_check_receive_date">08/07/2023</a>
+                  </div>
+                </div>
+
+              </div>
+              <div class="card-title">
+                <svg width="15" viewBox="0 0 24 24">
+                  <path d="M19 1C19 0.447715 19.4477 0 20 0C20.5523 0 21 0.447715 21 1V1.58582L22.2709 0.314894C22.6614
+                          -0.0756305 23.2946 -0.0756294 23.6851 0.314895C24.0757 0.705419 24.0757 1.33858 23.6851 1.72911
+                          L22.4142 3H23C23.5523 3 24 3.44772 24 4C24 4.55228 23.5523 5 23 5H20.4142L12.7017 12.7125
+                          C12.3112 13.103 11.678 13.103 11.2875 12.7125C10.897 12.322 10.897 11.6888 11.2875 11.2983L19
+                          3.58582V1Z" fill="var(--bg)"/>
+                  <path d="M17.3924 3.78908C17.834 3.3475 17.7677 2.61075 17.2182 2.31408C15.6655 1.47581 13.8883 1 12 1
+                          C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23C18.0751 23 23 18.0751 23 12C23 10.1154
+                          22.5261 8.34153 21.6909 6.79102C21.3946 6.24091 20.6574 6.17424 20.2155 6.61606L20.1856 6.64598
+                          C19.8554 6.97615 19.8032 7.48834 20.016 7.90397C20.6451 9.1326 21 10.5249 21 12C21 16.9706
+                          16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C13.4782 3 14.8732 3.35638
+                          16.1037 3.98791C16.5195 4.20129 17.0322 4.14929 17.3627 3.81884L17.3924 3.78908Z" fill="var(--bg)"/>
+                  <path d="M14.3899 6.79159C14.8625 6.31902 14.7436 5.52327 14.1062 5.32241C13.4415 5.11295 12.7339 5 12
+                          5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12C19 11.2702
+                          18.8883 10.5664 18.6811 9.9049C18.4811 9.26659 17.6846 9.14697 17.2117 9.61995L17.1194 9.71224
+                          C16.8382 9.99337 16.7595 10.4124 16.8547 10.7984C16.9496 11.1833 17 11.5858 17 12C17 14.7614
+                          14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7C12.4172 7 12.8225 7.0511
+                          13.21 7.1474C13.5965 7.24347 14.0166 7.16496 14.2982 6.88331L14.3899 6.79159Z" fill="var(--bg)"/>
+                  <path d="M11.078 9.15136C11.4874 9.01484 11.6934 9.48809 11.3882 9.79329L10.5827 10.5989C9.80254
+                          11.379 9.80254 12.6438 10.5827 13.4239C11.3628 14.204 12.6276 14.204 13.4077 13.4239L14.2031
+                          12.6285C14.5089 12.3227 14.9822 12.5301 14.8429 12.9397C14.441 14.1209 13.3135 15 12 15C10.3431
+                           15 9 13.6569 9 12C9 10.6796 9.88827 9.54802 11.078 9.15136Z" fill="var(--bg)"/>
+                </svg>
+                <span>Bénéficiaire</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="check-info-next" style=" color: #fff; font-size: 1rem; padding: 5px 7px; background: #000A; position: sticky; right: 0px; border-radius: 5px;">
+            &#9656;
+          </div>
+
+        </div>
+
+      </div>
+      <div class="col-4" style="height: 100%;">
+        <div style="background: #000; color:#fff; border-radius: 5px; box-shadow: 3px 0px 5px #aaa; width: 100%; height: 100%; padding: 5px;">
+          <div id="panel-title"><strong>Panel de control</strong></div>
+          <div class="hide-scroll" id="control-container" style="padding: 10px 5px 10px 30px; height: calc(100% - 100px); background: #eee; margin-top: 5px; border-radius: 5px;">
+            <div class="item-control open">
+              <div class="quiz">Donneur d'ordre</div>
+
+              <div class="content">
+                <div class="check-data">
+                  KANGA BORIS PARFAIT
+                </div>
+                <div class="btn-check" style="display: flex;flex-wrap: wrap;">
+                  <div class="good">Conforme</div>
+                  <div class="bad">Non-conforme</div>
+                </div>
+                <textarea class="comment form-control" placeholder="Commentaire"></textarea>
+              </div>
+
+            </div>
+            <div class="item-control">
+              <div class="quiz">Donneur d'ordre</div>
+
+              <div class="content">
+                <div class="check-data">
+                  KANGA BORIS PARFAIT
+                </div>
+                <div class="btn-check" style="display: flex;flex-wrap: wrap;">
+                  <div class="good">Conforme</div>
+                  <div class="bad">Non-conforme</div>
+
+
+                </div>
+                <textarea class="comment form-control" placeholder="Commentaire"></textarea>
+              </div>
+
+            </div>
+            <div class="item-control">
+              <div class="quiz">Donneur d'ordre</div>
+
+              <div class="content">
+                <div class="check-data">
+                  KANGA BORIS PARFAIT
+                </div>
+                <div class="btn-check" style="display: flex;flex-wrap: wrap;">
+                  <div class="good">Conforme</div>
+                  <div class="bad">Non-conforme</div>
+
+
+                </div>
+                <textarea class="comment form-control" placeholder="Commentaire"></textarea>
+              </div>
+
+            </div>
+            <div class="item-control">
+              <div class="quiz">Donneur d'ordre</div>
+
+              <div class="content">
+                <div class="check-data">
+                  KANGA BORIS PARFAIT
+                </div>
+                <div class="btn-check" style="display: flex;flex-wrap: wrap;">
+                  <div class="good">Conforme</div>
+                  <div class="bad">Non-conforme</div>
+
+
+                </div>
+                <textarea class="comment form-control" placeholder="Commentaire"></textarea>
+              </div>
+
+            </div>
+            <div class="item-control">
+              <div class="quiz">Donneur d'ordre</div>
+
+              <div class="content">
+                <div class="check-data">
+                  KANGA BORIS PARFAIT
+                </div>
+                <div class="btn-check" style="display: flex;flex-wrap: wrap;">
+                  <div class="good">Conforme</div>
+                  <div class="bad">Non-conforme</div>
+
+
+                </div>
+                <textarea class="comment form-control" placeholder="Commentaire"></textarea>
+              </div>
+
+            </div>
+            <div class="item-control">
+              <div class="quiz">Donneur d'ordre</div>
+
+              <div class="content">
+                <div class="check-data">
+                  KANGA BORIS PARFAIT
+                </div>
+                <div class="btn-check" style="display: flex;flex-wrap: wrap;">
+                  <div class="good">Conforme</div>
+                  <div class="bad">Non-conforme</div>
+
+
+                </div>
+                <textarea class="comment form-control" placeholder="Commentaire"></textarea>
+              </div>
+
+            </div>
+            <div class="item-control">
+              <div class="quiz">Donneur d'ordre</div>
+
+              <div class="content">
+                <div class="check-data">
+                  KANGA BORIS PARFAIT
+                </div>
+                <div class="btn-check" style="display: flex;flex-wrap: wrap;">
+                  <div class="good">Conforme</div>
+                  <div class="bad">Non-conforme</div>
+
+
+                </div>
+                <textarea class="comment form-control" placeholder="Commentaire"></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-
-<!--
-<script src="{{ url_for('static', filename='js/fullpage.min.js') }}"></script>
-
+<script src="{{ url_for('static', filename='js/d3-js/D3KBChart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/d3-js/Line.js') }}"></script>
+<script src="{{ url_for('static', filename='js/LinePrevision.js') }}"></script>
 <script>
+  $("#check-info-next").click(()=>{
+    $({scroll: $("#info-check").scrollLeft()}).animate({scroll: $("#info-check .col-4").width() + 40},{
+      duration: 300,
+      step: (now, fx)=>{
+         $("#info-check").scrollLeft(now);
+      },
+      complete: ()=>{
+        $("#check-info-next").css("opacity", 0);
+        $("#check-info-back").css("opacity", 0.5);
+      }
+    })
+  })
+  $("#check-info-back").click(()=>{
+    $({scroll: $("#info-check").scrollLeft()}).animate({scroll: 30},{
+      duration: 300,
+      step: (now, fx)=>{
+         $("#info-check").scrollLeft(now);
+      },
+      complete: ()=>{
+        $("#check-info-back").css("opacity", 0);
+        $("#check-info-next").css("opacity", 0.5);
+      }
+    })
+  })
+  $("#btn-switch-recto-verso>div").click((e)=>{
+
+    let target = $(e.currentTarget);
+    if (target.is(".active")) return;
+    $("#btn-switch-recto-verso>div").toggleClass("active");
+    let end_scroll_value = 0;
+    if (target.attr("data-role") === "verso"){
+      end_scroll_value = $("#check-image-recto").width();
+    }
+    $({scroll: $("#check-image-to-scroll").scrollLeft()}).animate({scroll: end_scroll_value},{
+      duration: 300,
+      step: (now, fx)=>{
+         $("#check-image-to-scroll").scrollLeft(now);
+      }
+    })
+  })
+  function load_image(id, sens="recto", elem=null){
+    let check_image = elem || $("#check-image-"+sens).get(0);
+    fetch("/get-image", {
+        method: "POST",
+        headers: {'Content-type': 'application/json'},
+        body: JSON.stringify({id:0, width: $("body").width(), height: $("body").height(), "sens": sens})
+    }).then(response=>{
+      // response.status
+      return response.text();
+    }).then(img=>{
+      check_image.src = img;
+      check_image.onload = ()=>{
+        if (elem !== null){
+          $("#last-check-container").append($("<div>").addClass("item-check").append(check_image));
+        }
+      };
+      check_image.onerror = ()=>{
+        console.log("check image load fail");
+        if (elem !== null) check_image.remove();
+      }
+    })
+  }
+  function set_next_back_btn(){
+    let elem = $("#info-check").get(0);
+    if (Math.abs(elem.scrollWidth - elem.offsetWidth)<10){
+      $("#check-info-back, #check-info-next").hide();
+      return false;
+    }else{
+      $("#check-info-back, #check-info-next").show();
+      $("#check-info-back").click();
+      return true;
+    }
+  }
+  window.onresize = set_next_back_btn;
   $(document).ready(()=>{
-    let FullPage = new fullpage('#fullpage', {
-        sectionsColor: ['#1bbc9b', '#4BBFC3', '#7BAABE', '#435b71', 'orange', 'blue', 'purple', 'yellow', '#435b71', 'orange', 'blue', 'purple', 'yellow' ],
-        anchors: ['1', '2'],
-        controlArrows: false,
-        navigation: true,
-        slidesNavigation: true
+
+    set_next_back_btn();
+
+    // loading img using async mode
+    load_image(id=0, sens="recto");
+    load_image(id=0, sens="verso");
+
+    fetch("/check-control/0", {
+        method: "POST",
+        headers: {'Content-type': 'application/json'}
+    }).then(response=>{
+      return response.json();
+    }).then(data=>{
+      console.log(data);
+      data.amounts.slice(0, 3).forEach((check)=>{
+        let img = document.createElement("img");
+        $(img).attr("data-check-id", check.check_id);
+        load_image(check.check_id, sens="recto", elem=img);
+      });
+      Object.keys(data.client_info).forEach((key)=>{
+        $("#" + key).html(data.client_info[key]);
+      });
+      $("#last_check_date").html(data.last_check_date);
+      $("#last_check_receive_date").attr("href", "/Control/Check-"+data.client_info.last_check_receive_id);
+      $("#account_manager_mail").attr("href", "mailto:" + data.client_info.account_manager_mail);
+
+      if (["particulier", "clicom"].includes(data.client_info.segment_client))
+        $("#client-segment").html(data.client_info.segment_client).show();
+      else $("#client-segment").hide();
+
+      let _width = $("#amount-chart-card").width() - 35;
+      let _height = Math.max(($("#amount-chart-card").height() - 90)/2, 25);
+      let client_receiver_data = data.amounts.filter((d)=> d.couple_tag===1);
+
+      new LinePrevision("#evo-client-global",
+          data.amounts.map((v, i)=>{return {x: i, y: v.amount, dd: v.created_date} }),
+          // config
+          {
+            width: _width, height: _height
+          }
+      ).draw(100000);
+
+      new LinePrevision("#evo-client-receiver",
+          client_receiver_data.map((v, i)=>{return {x: i, y: v.amount, dd: v.created_date} }),
+          // config
+          {
+            width: _width, height: _height
+          }
+      ).draw(100000);
     });
+
+
+
   })
 </script>
--->
-<script>
-  $("body").on("scroll", (e)=>{
-    console.log(e);
-  })
 
-  window.onscroll = (e)=>{console.log(e)}
-  window.addEventListener('scroll', function(){ console.log("ok") }, true)
+<script>
+  $("#control-container .item-control").click((e)=>{
+    let target = e.currentTarget;
+    $("#control-container .open").removeClass("open");
+    $(target).addClass("open");
+  });
+  $(".btn-check>div").click((e)=>{
+    e.stopPropagation();
+    let target = $(e.currentTarget);
+    let quiz = target.parent().parent().parent();
+    let _class = (target.is(".good"))? "green": "red";
+    quiz.removeClass("red").removeClass("green").addClass(_class);
+    target.addClass("active");
+
+    let next = [...$("#control-container .item-control")].filter((d)=> !$(d).is(".red, .green"));
+    if (next.length){
+      next[0].click();
+      //next[0].scrollIntoView();
+      $("#control-container").animate({scrollTop: $(next[0]).position().top - 10},100);
+    }
+
+  });
 </script>
 {% endblock %}

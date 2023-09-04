@@ -69,7 +69,7 @@ class KBLine extends D3KBChart{
 	draw(){
 	    let config = this.config;
 	    let _dataset = this.dataset;
-
+        console.log(_dataset);
         let svg = d3.select(this.svg)
                 .attr("width", config.width)
                 .attr("height", config.height)

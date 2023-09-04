@@ -63,7 +63,7 @@ class D3KBChart{
 
 	get_default_config(){return this._default_config;}
 
-    _map_color(domain, color="var(--orange)"){
+    _map_color(domain, color="var(--red)"){
         if (typeof color === "string") color = ["#fff", color];
         let colors = [];
         if (! Array.isArray(color)) throw "Bad color value given";
