@@ -88,6 +88,11 @@ def get_check_stats(check_info):
     return {"last_check_date": (result or [[None]*3])[0]["created_date"], "amounts": result}
 
 
+@APP.route("/Statistique")
+def get_statistique():
+    return render_template("stat_views.html")
+
+
 if __name__ == '__main__':
     # https://www.pinterest.fr/pin/794533559274214883/
     APP.run(debug=True)

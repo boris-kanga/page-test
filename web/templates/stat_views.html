@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+  #notify .badge{
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: red;
+    font-size: 0.5rem;
+    color: #fff;
+  }
+  @keyframes bell_1{
+    0%{
+        transform: rotate(0deg);
+    }
+    25%{
+        transform: rotate(var(--deg))
+    }
+    50%{
+        transform: rotate(0deg);
+    }
+    75%{
+        transform: rotate(calc(-1 * var(--deg)));
+    }
+    100%{
+        transform: rotate(0deg);
+    }
+  }
+
+  @keyframes bell_{
+      0%,
+      100% {
+        transform: translateX(-6.5%);
+      }
+      20%{
+        transform: translateX(0%);
+      }
+      25%{
+        transform: translateX(-1%);
+      }
+      40%{
+        transform: translateX(11%);
+      }
+      55%{
+        transform: translateX(-11%);
+      }
+      60%{
+        transform: translateX(0%);
+      }
+      68%{
+        transform: translateX(10%);
+      }
+      78%{
+        transform: translateX(-11%);
+      }
+      90%{
+        transform: translateX(11%);
+      }
+      98%{
+        transform: translateX(-11%);
+      }
+  }
+
+  @keyframes bell_ball{
+      0%, 50%,
+      100% {
+        transform: translateX(0%);
+      }
+
+      25%{
+        transform: translateX(8%);
+      }
+      75%{
+        transform: translateX(-8%);
+      }
+
+  }
+  .bell-2{
+    transform-origin: center;
+    --deg: 30deg;
+    animation: 500ms linear 1s infinite bell_1;
+  }
+  #notify circle{
+    animation: 500ms linear 1s infinite bell_ball;
+  }
+</style>
+<div style="width: 100%; height: 100%; padding: 10px;">
+  <div style="background: #0001; border-radius: 5px; width: 100%; height: 100%; border-radius: 5px; padding: 15px;">
+
+    <div style="display: flex; justify-content: space-between">
+      <div></div>
+      <div style="display: flex; --size: 30px;">
+        <div id="notify" style="margin-right: 10px; position: relative; --bg: #000">
+          <svg style="width: var(--size); height: var(--size);" fill="var(--bg)" viewBox="0 0 448 512">
+
+            <path class="bell-2"  d="M432.871,352.059c-22.25-22.25-49.884-32.941-49.884-141.059c0-79.394-57.831-145.269-133.663-157.83h
+                    -4.141 c4.833-5.322,7.779-12.389,7.779-20.145c0-16.555-13.42-29.975-29.975-29.975s-29.975,13.42-29.975,
+                    29.975 c0,7.755,2.946,14.823,7.779,20.145h-4.141C120.818,65.731,62.987,131.606,62.987,211c0,108.118
+                    -27.643,118.809-49.893,141.059 C-17.055,382.208,4.312,434,47.035,434H398.93C441.568,434,463.081,
+                    382.269,432.871,352.059z"/>
+              <circle cx="224" cy="400" r="100"/>
+          </svg>
+          <span class="badge">0</span>
+        </div>
+        <div style="border-radius: 50%;  height: var(--size); width: var(--size); background: #fff; box-shadow: 3px 0px 3px #ccc"></div>
+      </div>
+    </div>
+
+      <div></div>
+  </div>
+</div>
+
+
+{% endblock %}
