@@ -67,6 +67,7 @@ class KBLine extends D3KBChart{
     }
 
 	draw(){
+	    self = this;
 	    let config = this.config;
 	    let _dataset = this.dataset;
         console.log(_dataset);
@@ -175,14 +176,14 @@ class KBLine extends D3KBChart{
                             .attr("stroke", "#ccce")
                             .attr("stroke-dasharray",4);
 
-                        config.on_points_mouseenter(data, elm.index);
+                        config.on_points_mouseenter(data, elm.index, self.root);
                         e.stopPropagation();
 
                     })
                     .on("mouseleave", (e, d)=>{
                         if (e.currentTarget == svg.node()){
                             d3.select(".kb-hover-indicator").remove();
-                            config.on_points_mouseleave();
+                            config.on_points_mouseleave(self.root);
                         }
                         e.stopPropagation();
 

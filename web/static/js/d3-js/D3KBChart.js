@@ -84,11 +84,12 @@ class D3KBChart{
         return color[index % color.length];
     }
 	#prepare_config(config){
+
         config = config || this.get_default_config();
         var default_config = this.get_default_config();
-	    let parent_ = this.root;
-	    config.width = config.width || parent_.offsetWidth || 50;
-	    config.height = config.height || parent_.offsetHeight || 50;
+	    let parent_dim = this.root.getBoundingClientRect();
+	    config.width = config.width || parent_dim.width || 50;
+	    config.height = config.height || parent_dim.height || 50;
 
         config = Object.assign(default_config, config);
 

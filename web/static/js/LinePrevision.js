@@ -25,8 +25,8 @@ function LinePrevision(target, data, config){
     this.svg = d3.select(_get_svg(target))
         .attr("width", config.width || 50)
         .attr("height", config.height || 50);
-    width = config.width - 10;
-    height = config.height - 10;
+    let width = config.width - 10;
+    let height = config.height - 10;
     let root = this.svg.append("g")
           .attr("transform", "translate("+[2.5, 2.5]+")");
 
@@ -43,7 +43,7 @@ function LinePrevision(target, data, config){
     this.draw = (point)=>{
 
         let m = _mean(data), s = _std(data);
-        temp_point = point || m;
+        let temp_point = point || m;
         let prevision = {min: m-s, max: m+s};
         var y = d3.scaleLinear()
 			.domain([d3.min(data, (d)=>{ return Math.min(d.y, prevision.min, temp_point); }),

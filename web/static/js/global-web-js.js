@@ -231,13 +231,16 @@ function myCustomDate(value){
     }
     this.addDay=function (value){
         this.date.setDate( this.date.getDate()+value );
+        //console.log(this.date);
         return this;
 
     }
     this.isoShow=function () {
         if (!this.date) {return "....-..-.."}
         let m=((this.date.getMonth()+1)>9)?(this.date.getMonth()+1):"0"+(this.date.getMonth()+1)
-        return this.date.getFullYear()+"-"+m+"-"+this.date.getDate();
+        let d = this.date.getDate();
+        d = (d<10)? "0"+d: d;
+        return this.date.getFullYear()+"-"+m+"-"+d;
     }
     this.toShow= function (){
         if (!this.date) {return null;}
