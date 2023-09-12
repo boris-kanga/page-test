@@ -1,6 +1,7 @@
 import base64
 import datetime
 from io import BytesIO
+import json
 
 from flask import Flask, render_template, request, jsonify
 from PIL import Image
@@ -85,12 +86,88 @@ def get_check_stats(check_info):
             "%d/%m/%Y")
     result = [{k: d[i] for k, i in zip(["amount", "created_date", "couple_tag", "check_id"], range(len(d)))}
               for d in result]
-    return {"last_check_date": (result or [[None]*3])[0]["created_date"], "amounts": result}
+    return {"last_check_date": (result or [[None] * 3])[0]["created_date"], "amounts": result}
 
 
 @APP.route("/Statistique")
 def get_statistique():
+    # 3 pipeline to calculate receipt data list
+    # distribution_action need to have datetime field named -> full_datetime
+    distribution_period = ["2023-07-01"]
+    range_amount = []
+    controllers = []
+    # the first pipe is about the last distribution for each selected period
+    f"""
+    select id, distribution_date, period_range from (
+        select 
+            id,
+            distribution_date,  
+            period_range,
+            row_number() over (partition by distribution_date order by full_datetime desc) as rang 
+        from distribution_action 
+        
+        where distribution_date in ({','.join(['%s' for _ in distribution_period])})
+    ) where rang = 1
+    """  # , params=(*distribution_period), dict_res=True
+    result = []
+    set_of_receipt_date = set()
+    couple_last_distribute_date_id = []
+    for d in result:
+        try:
+            period_range = json.loads(d.period_range)
+        except json.JSONDecodeError:
+            period_range = []
+        set_of_receipt_date.update(period_range)
+        couple_last_distribute_date_id.append(str(d.distribution_date) + "-" + str(d.id))
+    ####################################################################################################################
+    # PROBLEM WITH "distribution_date" --> maybe needed to loop on each distribution_period
+    f"""
+    select distribution_date, count(*) as nb_receipt, sum(amount) as amount_receipt 
+    from receipt_trace
+    where 
+        receipt_date in ({','.join(['%s' for _ in set_of_receipt_date])})
+    amount between %s and %s
+    and matricule in ({','.join(['%s' for _ in controllers])})
+
+    group by distribution_date
+    """  # , params=(*set_of_receipt_date, *range_amount, *controllers), dict_res=True
+    ####################################################################################################################
+
+    # second is about got check already controlled before these last distribution
+    f"""
+    select distribution_date, count(*) as nb_receipt, sum(amount) as amount_receipt 
+    from check_control, distribution_action, receipt_trace 
+    where check_control.id_distribution = distribution_action.id and receipt_trace.id = id_receipt_trace
+        and distribution_date in ({','.join(['%s' for _ in distribution_period])})
+        and (distribution_date || '-' || distribution_action.id) not in 
+        ({','.join(['%s' for _ in couple_last_distribute_date_id])}) 
+        and (end_control_date is not null or control_status=1)
+        and amount between %s and %s
+        and matricule in ({','.join(['%s' for _ in controllers])})
+        group by distribution_date
+    """  # , params=(*distribution_period, *couple_last_distribute_date_id, *range_amount, *controllers), dict_res=True
+    result_already_control = []
+
+    # the third is about period with no distribution
+    no_distribution_period = list(set(distribution_period).difference([d.distribution_date for d in result]))
+
+    for d in no_distribution_period:
+        # apply auto_detect_receipt_date for each d and
+        _temp = auto_detect_receipt_date(d)
+        f"""
+        select count(*) as nb_receipt, sum(amount) as amount_receipt 
+        from receipt_trace
+        where 
+            receipt_date in ({','.join(['%s' for _ in _temp])})
+        amount between %s and %s
+        and matricule in ({','.join(['%s' for _ in controllers])})
+        """  # , params=(*_temp, *range_amount, *controllers), dict_res=True, limit=1
+
     return render_template("stat_views.html")
+
+
+def auto_detect_receipt_date(d):
+    return []
 
 
 if __name__ == '__main__':
