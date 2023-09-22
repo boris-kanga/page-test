@@ -1,0 +1,996 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    #btn-controller .btn-group>span{
+        padding: 5px;
+        cursor: pointer;
+        --color: #ccc;
+        transition-duration: 300ms;
+        border-left: thin solid #eee;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #btn-controller .btn-group:not(.no-applicable)>span:hover{
+        --color: var(--orange);
+    }
+    #tree-view{
+        height: calc(100% - 32px);
+        background: white;
+        position: relative;
+        font-size: 12px;
+        font-family: tahoma;
+    }
+
+    .tree-folder>div:first-child, .tree-file{
+        padding: 1px 0 1px 10px;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -webkit-touch-callout : none
+        -moz-user-select: none;
+        -o-user-select: none;
+        user-select: none;
+    }
+    .sub-tree{display: none; padding-left: 25px;}
+    .sub-tree, .tree-folder, .tree-file{width: max-content; position: relative;}
+
+    .sub-tree .tree-folder, .sub-tree .tree-file{width: 100%; position: relative;}
+
+    .tree-folder, .tree-file{position: relative; --current-color: rgba(100, 100, 100, 0)}
+    .tree-folder>div:first-child{ text-indent: 25px; position: relative;}
+    .tree-folder>div:first-child:hover, .tree-file:hover{
+        /*background: var(--light-dark);*/
+        --current-color: rgba(100, 100, 100, 0.5);
+    }
+
+    .tree-file>span:first-child{font-size: 10px;}
+    .tree-file>span.tree-option:hover, .tree-folder>div:first-child>span.tree-option:hover{
+
+        --current-color: var(--dark);
+    }
+    .tree-file>span.tree-option, .tree-folder>div:first-child>span.tree-option{
+        cursor: pointer;
+        margin-left: 5px;
+    }
+
+    .tree-folder>div:first-child:before{
+        content: "";
+        background-image: url({{ url_for('static', filename='images/db-table.svg') }});
+        background-size: 20px 20px;
+        width: 20px; height: 20px;
+        left: 10px;
+        position: absolute;
+    }
+    .tree-folder.is_root>div:first-child:before{
+        background-image: url({{ url_for('static', filename='images/db.svg') }});
+    }
+
+    .tree-folder>div:first-child:after{
+        content: attr(data-state);
+        color: #000;
+        width: 20px; height: 20px;
+        left: -25px;
+        position: absolute;
+    }
+    #tree-view #hovered-element, #tree-view .highlight-line{
+        position: absolute;
+        left:0;
+        background: var(--light-dark);
+        transition-duration: 50ms;
+        transition-property: top, height, background;
+    }
+    #tree-view .tree-file.automate{
+        position: relative;
+    }
+    #tree-view .moving{
+        position: relative;
+    }
+    #tree-view .moving:after{
+        content: "\2702";
+        width: 20px;
+        height: 20px;
+        position: absolute;
+        top: -2px; right:-10px;
+        color: var(--orange);
+        font-size: 10px;
+        transform: rotate(180deg);
+    }
+
+    #tree-view .tree-file.automate:before{
+        background: url({{ url_for('static', filename='images/robot.webp') }});
+        background-repeat: no-repeat;
+        background-position: center;
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        content:"";
+        background-size: 10px 10px;
+        position: absolute;
+        top: 0; left: -10px;
+    }
+    .floating-menu{
+        position: absolute;
+        top: 33px;
+        background: var(--dark);
+        color: #ccc;
+        right: 4px;
+        z-index: 100000;
+        border-radius: 2px;
+        box-shadow: 3px 2px 5px #ccc;
+        width: max-content;
+        padding: 3px;
+    }
+    /*
+    .floating-menu:before{
+        content: "\25B2";
+        position: absolute;
+        top: -10px;
+        right: 5px;
+        color: #f8f9fa;
+        z-index: 1;
+
+    }
+    */
+
+    .floating-menu>div:hover{
+        background: var(--kb-orange-light);
+        color: #fff;
+    }
+    .floating-menu>div{
+        position: relative;
+        padding: 5px 30px 5px 5px;
+        cursor: pointer;
+        font-size: 12px;
+        z-index: 2;
+        border-radius: 2px;
+    }
+    .floating-menu>div:last-child{border-radius: 0 0 2px 2px;}
+    .floating-menu>div:first-child{border-radius:  2px 2px 0 0 }
+    .floating-menu>div:not(:last-child){border-bottom: thin solid #ccc;}
+
+    #resize-frame:hover{
+        background: #fd7e14!important;
+    }
+
+    /* HEADER CSS */
+    #header-editor{
+        display: flex;
+        align-items: flex-end;
+        padding-top: 3px;
+        /*background: rgba(40, 42, 54, 0.85);*/
+        color: #ccc;
+        font-weight: bold;
+        font-size: 10px;
+        padding-left: 10px;
+
+    }
+    #header-editor>span{
+        padding: 5px 15px;
+        border-radius: 5px 5px 0 0;
+        transition-duration: 100ms;
+        border: thin solid transparent;
+        border-bottom : none;
+        position: relative;
+        white-space: nowrap;
+
+    }
+    #header-editor>span[title^='Temp']:before, #header-editor>span[title^='temp']:before{
+        content: "*"!important;
+        position: absolute;
+        top: 5px; left: 10px;
+        color: var(--green2);
+    }
+    #header-editor>span.active{
+        background: rgba(40, 42, 54, 1);
+        color: #fff;
+    }
+    #header-editor>span:not(.active):hover{
+        border-color: #aaa;
+        color: #eee;
+    }
+
+    @keyframes finish_script_animation {
+      from {
+        background: rgba(40, 42, 54, 1);
+        color: #eee;
+      }
+
+      to {
+        background: var(--kb-orange-light);
+        color: #000;
+      }
+    }
+
+    #header-editor>span.finish:not(.active){
+        animation: finish_script_animation 5 300ms alternate;
+    }
+
+    #header-editor>span.modify:before{
+        content: "*"!important;
+        position: absolute;
+        top: 5px; left: 10px;
+        color: var(--green2);
+    }
+    #header-editor>span.running>span:before{
+        content: "\2BC3";
+        width: 10px;
+        height: 10px;
+        position: absolute;
+        top: -4px; left: -4px;
+        z-index: 100;
+        font-size: 17px;
+        display: inline-block;
+    }
+
+    #header-editor>span>span{
+
+    /*cross*/
+        margin-left: 10px;
+        font-size: 8px;
+        position: relative;
+        top: -2px;
+        cursor: pointer;
+        color: #eee;
+        font-size: 10px;
+    }
+
+    #header-editor>span>span:before{
+        content: "\2715";
+        width: 10px;
+        height: 10px;
+        position: absolute;
+        top: 0px; left: 0px;
+        z-index: 100;
+        display: inline-block;
+    }
+    #header-editor>span>span:hover{
+        color: var(--orange);
+    }
+    #new-temp-file{cursor: pointer}
+    #new-temp-file:hover{
+        color: #eee;
+    }
+
+    .editor_error_line{ background-color: #ee000088;}
+    .editor_error_word{text-decoration: red wavy underline;}
+    .kb-editor{
+        width: 100%;
+        height: 100%;
+    }
+    .kb-editor:not(.active){
+        display:none;
+    }
+    #scripts-editor{
+        transition-duration: 300ms;
+    }
+</style>
+
+<style>
+    .tree-file:before{
+        content: "";
+        background-size: 15px 15px;
+        width: 15px; height: 15px;
+        left: -12px;
+        position: absolute;
+        top: 3px;
+    }
+    .tree-file.field-integer:before{
+        background-image: url({{ url_for('static', filename='images/types/integer.svg') }});
+    }
+    .tree-file.field-numeric:before{
+        background-image: url({{ url_for('static', filename='images/types/numeric.svg') }});
+    }
+    .tree-file.field-text:before{
+        background-image: url({{ url_for('static', filename='images/types/text.svg') }});
+    }
+    .tree-file.field-email:before{
+        background-image: url({{ url_for('static', filename='images/types/email.svg') }});
+    }
+    .tree-file.field-phone:before{
+        background-image: url({{ url_for('static', filename='images/types/phone.svg') }});
+    }
+    .tree-file.field-json:before{
+        background-image: url({{ url_for('static', filename='images/types/json.svg') }});
+    }
+    .tree-file.field-datetime:before{
+        background-image: url({{ url_for('static', filename='images/types/datetime.svg') }});
+    }
+    .tree-file.field-date:before{
+        background-image: url({{ url_for('static', filename='images/types/date.svg') }});
+    }
+    .tree-file.field-phone:before{
+        background-image: url({{ url_for('static', filename='images/types/phone.svg') }});
+    }
+</style>
+
+<style>
+    #python-output td {
+        padding: 0;
+        margin: 0px;
+        overflow: hidden;
+        vertical-align: middle;
+    }
+    #python-output, #overview{border-collapse: collapse; border-spacing: 0px;}
+
+    #overview th, #overview td{
+        border: 1px solid #ccc;
+        padding: 0;
+        margin: 0px;
+        overflow: hidden;
+        vertical-align: middle;
+    }
+    #overview th>div, #overview td>div{
+        padding-left: 2px;
+        font-family: cursive;
+    }
+
+
+    #overview th:not(.row-indexes){
+        position: sticky;
+        top:0;
+        background: black;
+        color: white;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+        border: none;
+        border-right: thin solid #fff;
+        height: 35px;
+        padding-top: 5px;
+        cursor: pointer;
+
+    }
+
+    #overview div{
+        overflow: hidden;
+        height: 30px;
+        margin: 0px;
+        padding: 0px;
+        display:block;
+        font-size: 12px;
+        text-overflow: ellipsis;
+    }
+
+    #overview td div, #overview th div{
+      border: 0;
+      min-height: 20px!important;
+      min-width: 20px!important;
+      -webkit-user-select: all;
+      -ms-user-select: all;
+      user-select: all;
+    }
+    #overview td div{font-weight: 200;}
+    .row-indexes{
+        font-size: 8px;
+        color: #aaa;
+        background: #eee;
+        position: sticky;
+        left:0;
+        text-align: center;
+        padding: 0 3px;
+        vertical-align: bottom;
+    }
+    #python-output .row-indexes{ background: transparent; color: var(--orange);}
+    #overview tbody tr:nth-child(even) {
+      background-color: var(--green-light);
+    }
+    #overview tbody tr:nth-child(odd) {
+      background-color: #fff;
+    }
+    #overview .resizable{
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -webkit-touch-callout : none
+        -moz-user-select: none;
+        -o-user-select: none;
+        user-select: none;
+        display: block;
+        width: 5px;
+        height: 100%;
+        position: absolute; right:0; top:0;
+        cursor: col-resize;
+        z-index: 1000;
+
+    }
+    #overview .resizable:hover{
+        background: #fadad888;
+    }
+    .filter-col{
+        display: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -webkit-touch-callout : none
+        -moz-user-select: none;
+        -o-user-select: none;
+        user-select: none;
+        background: #fff9;
+        padding: 3px 5px;
+        position: absolute; right:5px; bottom: 10px;
+        z-index: 1000;
+        border-radius: 5px;
+        color: #000;
+        font-size: 8px;
+    }
+    .filter-col:hover, .filter-col.active{background: #fffe;}
+    .tooltip {
+        resize: both;
+        overflow: hidden;
+        background: white;
+        position: absolute;
+        z-index: 100;
+        top: 30px; left:0;
+        height: 200px;
+        min-width: 140px;
+        border-radius: 2px;
+        box-shadow: 3px 3px 5px #ccc;
+        opacity: 1;
+        display: none;
+        font-size: 10px;
+
+
+    }
+    .tooltip *{font-weight: 400!important;}
+
+    #python-output{
+        font-size: 10px;
+    }
+
+    #script-result{
+        transition-duration: 300ms;
+        width: 100%; min-width: 100px; height: 20px; background: #fff; position: relative;
+        z-index: 100;
+
+    }
+    #script-result>div{
+        transition-duration: 300ms;
+    }
+    #script-result:not(.open){cursor: pointer}
+    #info-bar:hover{
+        background: lightyellow!important;
+    }
+    #script-result:not(.fixed){
+        position: absolute!important;
+        bottom:0
+    }
+    #script-result:not(.fixed)>div.hidden:first-child{height:0}
+    #script-result:not(.fixed)>div:first-child{
+        height: 250px!important;
+    }
+    #script-result>div:first-child{
+        cursor: default;
+    }
+    #stick-overview.active{
+        background: var(--kb-orange-light)!important;
+        border-color: var(--kb-orange-light)!important;
+    }
+    #overview-menu{
+        display: flex;
+        border-bottom: thin solid #ccc;
+    }
+    #overview-menu>span{
+        padding: 3px 5px;
+        font-size: 8px;
+        border-radius: 3px 3px 0 0;
+        border: thin solid transparent;
+        background: #eee;
+        position: relative; top: 3px;
+        cursor: pointer;
+    }
+    #overview-menu>span:hover{
+        background: var(--kb-orange-light);
+    }
+
+    #overview-menu>span.active{
+        background: #fff!important;
+        border-color: #ccc;
+        top: 4px;
+        border-bottom-color: #fff;
+    }
+    .log-container{
+        font-size: 10px;
+        padding-left: 3px;
+    }
+    .log-container .error, .log-container .exception{
+        background: red;
+        color: #000;
+    }
+    .log-container .success{
+        color: green;
+    }
+    .log-container .warning{ background: gold; color: #000}
+    .log-container .info {background: var(--primary); color: #fff}
+</style>
+<div class="main" style="height: 100%">
+    <div id="btn-controller"
+         style="width: 100%; background: #fff; height: 30px;
+                border-top: thin solid #eee;
+                display: flex; align-items: center; overflow: hidden; justify-content: space-between">
+        <div class="btn-group">
+            <span id="running-loader" class="hidden" style="cursor: default">
+                <img src="{{ url_for('static', filename='images/loaders/loader.gif') }}" width="30">
+            </span>
+            <span id="manual-run" title="Run the process (Ctrl+R)" data-bind-ctrl="Ctrl+R" onclick="manual_run(false)">
+                <svg width="15" height="15" viewBox="0 0 41 41" fill="var(--color)">
+                    <path d="M36.068,20.176l-29-20C6.761-0.035,6.363-0.057,6.035,0.114C5.706,0.287,5.5,0.627,5.5,0.999v40
+                        c0,0.372,0.206,0.713,0.535,0.886c0.146,0.076,0.306,0.114,0.465,0.114c0.199,0,0.397-0.06,0.568-0.177l29-20
+                        c0.271-0.187,0.432-0.494,0.432-0.823S36.338,20.363,36.068,20.176z"/>
+                </svg>
+            </span>
+            <div id="limit-container" class="center-container" style="padding-right: 15px;">
+                    <datalist id="limit-size-list"><option>100</option><option>ALL</option></datalist>
+
+                    <input  list="limit-size-list" id="limit-size" value="100" style="max-width: 40px; font-size: 8px;"/>
+                    <label style="font-size: 6px; margin-bottom: 0; margin-left: 5px; ">Limit</label>
+            </div>
+            <span onclick="stop_running()" class="hidden disabled" id="stop-running" title="Stop the process">
+                <svg fill="var(--color)" width="15" height="15" viewBox="0 0 512 512">
+                  <path  d="m502.625,121.375l-112-112c-6-6-14.141-9.375-22.625-9.375h-224c-8.484,
+                        0-16.625,3.375-22.625,9.375l-112,112c-6,6-9.375,14.141-9.375,
+                        22.625v224c0,8.484 3.375,16.625 9.375,22.625l112,112c6,6
+                        14.141,9.375 22.625,9.375h224c8.484,0 16.625-3.375 22.625-9.375l112-112c6-6
+                        9.375-14.141 9.375-22.625v-224c0-8.484-3.375-16.625-9.375-22.625zm-134.625,118.621v112c0,
+                        35.348-34.262,64.004-69.609,64.004h-46.555c-30.305,0-58.004-17.121-71.555-44.225
+                        l-9.891-19.778-40.824-95.258c-4.027-9.402-0.031-20.313 9.113-24.887 8.91-4.453
+                        22.547-1.406 27.824,7.039l25.497,36.304v-35.199-128c0-8.836 7.164-16 16-16s16,
+                        7.164 16,16v120c0,4.418 3.582,8 8,8s8-3.582 8-8v-152c0-8.836 7.164-16 16-16s16,
+                        7.164 16,16v152c0,4.418 3.582,8 8,8s8-3.582 8-8v-120c0-8.836 7.164-16 16-16s16,
+                        7.164 16,16v128 8c0,4.418 3.582,8 8,8s8-3.582 8-8v-8-80c0-8.836 7.164-16 16-16s16,
+                        7.164 16,16v80z"/>
+                </svg>
+            </span>
+
+            <span id="extract-data" title="Extraire les données (Ctrl+E)" onclick="manual_run(true)" data-bind-ctrl="Ctrl+E">
+                <svg width="15" height="15" viewBox="0 0 24 24" >
+                    <path d="M15.71,13.29a1,1,0,0,1,0,1.42l-3,3a1,1,0,0,1-1.42,0l-3-3a1,1,0,0,1,1.42-1.42L12,15.59l2.29-2.3A1,1,0,0,1,
+                        15.71,13.29Zm-4.42-.58a1,1,0,0,0,1.42,0l3-3a1,1,0,0,0-1.42-1.42L13,9.59V3a1,1,0,0,0-2,0V9.59L9.71,8.29A1,1,0,0,
+                        0,8.29,9.71Z" fill="var(--color)" />
+                    <path d="M19,22H5a2,2,0,0,1-2-2V17a1,1,0,0,1,2,0v3H19V17a1,1,0,0,1,2,0v3A2,2,0,0,1,19,22Z"
+                          style="fill: rgb(0, 0, 0);"/>
+                </svg>
+            </span>
+        </div>
+
+        <a style="padding: 10px; text-decoration: none; color: #555; font-size: .7rem; display: flex; align-items: center" href="/" >
+            <img src="{{ brand }}" width="20"/>
+            <span style="margin-left: 5px;">{{ app_name }}</span>
+        </a>
+    </div>
+    <div class="container-fluid" style="height: calc(100% - 30px); position: relative; border-top: thin solid #eee">
+        <div class="row" style="justify-content: center; height: 100%;">
+            <div class="col-12" style="padding: 0; height: 100%">
+                <div style="width: 100%; height: 100%; display: flex">
+                    <div translate="no" id="tree-frame"  style="flex: 1 1 auto;font-size: 11px; color: var(--dark); width: 130px;">
+                        <div class="hide-scroll" id="tree-view">
+                            <div class="center-container loader" style="width: 100%; height: 100%">
+                                <img src="{{ url_for('static', filename='images/loaders/loader.gif') }}" width="30">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="resize-frame" class="unselectable" style="height: 100%; width: 2px; position :relative; cursor:ew-resize; background: #eee"></div>
+                    <div translate="no" id="editor-frame" style="flex: 1 1 auto;width: calc(100% - 131px); display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative;">
+                        <div class="flex-between unselectable" style="background: rgba(40, 42, 54, 0.85); display: flex; justify-content: space-between">
+                            <div id="header-editor" class="hide-scroll" style="width: calc(100% - 50px);" >
+                            </div>
+                            <div id="new-temp-file" class="unselectable"
+                                 style="width: 50px;
+                                    background: #2ca9bc88; border-radius: 0 0 0 5px;
+                                    padding-left: 10px; font-size: 20px;"> + </div>
+                        </div>
+                        <div style="with: 100%; height: calc(100% - 50px); " id="scripts-editor"></div>
+
+                        <div data-pop-up-opener-id="#overview-frame" id="script-result"
+                             style="width: 100%; min-width: 100px; height: max-content; background: #fff; position: relative; border-radius: 5px 5px 0 0">
+                            <div id="overview-frame" class="kb-pop-up hidden" style="height: 0px; position: relative">
+                                <div id="stick-overview" class="center-container" style="position: absolute; right: 10px; border-radius: 3px; border: thin solid #ccc; padding: 0 5px; top:3px; height: 20px">
+                                    <img src="{{ url_for('static', filename='images/stick.svg') }}" width="10px">
+                                </div>
+                                <div id="overview-menu" style="background: #eee; padding:3px;">
+                                    <span class="active">Output</span>
+                                    <span>Logs</span>
+
+                                    <i id="timestamp" style="font-size: 0.5rem; position: relative; top:7px; left: 10px; color: #80bdff">It's take: </i>
+                                </div>
+                                <div id="overview-output" class="hide-scroll" style="--s-width: 10px; position: relative; height: calc(100% - 25px); border: 5px ridge #eee;">
+                                    <table id="python-output"></table>
+                                    <table id="overview">
+                                        <thead></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                    <!--<div id="overview-row-number" style="position: sticky; width: 15"></div>-->
+                                    <div id="overview-table" style="position: relative">
+                                        <div id="overview-head" style="position: sticky; top:0; height: 0"></div>
+                                        <div id="overview-body" style="top:25px;"></div>
+                                        <div id="overview-footer"></div>
+                                    </div>
+                                </div>
+
+                                <pre id="overview-log" class="hidden hide-scroll" style="position: relative; height: calc(100% - 25px)">
+                                </pre>
+                            </div>
+                            <div id="info-bar" style="background: linear-gradient(#eee5, #eee);display: flex; width: 100%; height: 20px; border-top: thin solid #eee; justify-content: flex-end ">
+                                <div id="auto-save-loader" style="position: relative; top: -5px; right: 10px; display: none">
+                                    <img src="{{ url_for('static', filename='images/loaders/loader.gif') }}" width="20">
+                                    <small style="font-size: 8px; color: var(--orange)">Auto save</small>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var KB_GLOBAL_VAR = {"editors": [], "data": []}
+    var MAX_NUMBER_COLUMN = 100;
+</script>
+
+<!-- tree view logique -->
+<script>
+    // tree view logique
+
+    function check_for_tree_folder(node, is_root){
+        let name = node.split("/");
+        name = name[name.length - 1]
+        name = name.split("\\")
+        name = name[name.length - 1]
+        let root = $(".tree-folder[data-name='"+node+"'] .sub-tree");
+        if (!root.length){
+            root = document.createElement("div");
+            root.classList = "tree-folder"
+            root.setAttribute("data-name", node);
+            $(root).append("<div data-state='⏵'><span>"+name+"</span><span class='tree-option'></span></div><div class='sub-tree'></div>")
+            $("#tree-view").append(root);
+            $(root).toggleClass("is_root", is_root);
+            root = $(root).find(".sub-tree");
+        }
+        return root;
+    }
+
+    function write_treeview(data_tree){
+        // update treeview
+        console.log(data_tree);
+        $("#tree-view>div").slice(0).remove();
+        data_tree.forEach((level, index)=>{
+            let node = level.root;
+            let root = check_for_tree_folder(node, level.is_root);
+            level.folders.forEach((f)=>root.append("<div class='tree-folder' data-name='"+(node+"/"+f)+"'><div data-state='⏵'><span>"+f+"</span><span class='tree-option'></span></div><div class='sub-tree'></div></div>"));
+            level.files.forEach((f)=>root.append("<div class='tree-file field-"+f.type+"'><span>"+f.column+"</span><span class='tree-option'></span></div>"));
+        });
+    }
+
+    $("#tree-view").on("click", '.tree-folder>div:first-child, .tree-file', (e)=>{
+        let currentTarget = e.currentTarget;
+        if ($(currentTarget).is('.tree-file')){
+            // click on file
+            let target = e.currentTarget;
+            let name = target.innerText;
+            let path = name
+            if ($(target.parentNode.parentNode).is(".tree-folder")){
+                path = $(target.parentNode.parentNode).attr("data-name") + "/" + name
+            }
+            console.log(path);
+
+        }else if ($(currentTarget).is('.tree-folder>div:first-child') ){
+            if ($("#tree-view").hasClass("move-file") && $("#tree-view .action-option-selected").find(currentTarget).length) return;
+            $(e.currentTarget.parentNode.querySelector("div.sub-tree")).slideToggle(100, ()=>{
+                if (e.currentTarget.parentNode.querySelector("div.sub-tree").style.display === "block"){
+                    $(e.currentTarget).attr('data-state', "⏷");
+                }else{
+                    $(e.currentTarget).attr('data-state', "⏵");
+                }
+            });
+
+
+        }
+
+     })
+
+
+    $(document).ready(()=>{
+        // Init the frame
+        // create treeview
+
+
+        fetch("{{ base_api }}/db-console").then((data)=>data.json())
+            .then(data=>{
+                write_treeview(data.schema);
+
+                $("#header-editor span:last-child").addClass("active");
+                $(".tree-folder>div:first-child").get(0).click();
+            })
+            .catch((response)=>{})
+    });
+
+</script>
+
+<script>
+    function open_file(click_on=true){
+        let editor = document.createElement("div");
+        editor.classList = "kb-editor";
+        $("#scripts-editor").append(editor);
+        let monaco_editor = monaco.editor.create(
+            editor, {
+            value: "",
+            language: "sql",
+            automaticLayout: true,
+            theme: "vs-dark"
+        });
+        KB_GLOBAL_VAR["editors"].push(monaco_editor);
+        KB_GLOBAL_VAR["data"].push(null);
+
+        monaco_editor.index = KB_GLOBAL_VAR["editors"].length -1;
+
+        $("#header-editor").append("<span class='unselectable'>Script "+(monaco_editor.index +1)+"<span></span></span>");
+        if (click_on){
+            $("#header-editor>span:last-child").click();
+            // editor.scrollIntoView({ behavior: "smooth"})
+            document.querySelector("#header-editor").scrollTo({
+                left: document.querySelector("#header-editor").scrollWidth,
+                behavior: "smooth",
+            });
+        }
+        // binding event to editor
+        monaco_editor.onDidChangeModelContent((e)=>{
+            // is temp
+            monaco_editor.getModel().setLanguage("sql")
+            let elem = $("#header-editor>span").get(monaco_editor.index);
+            $(elem).addClass("modify");
+        });
+
+    }
+
+    $(document).ready(()=>{
+        open_file();
+    });
+
+    function get_open_file_info(){
+        let spans = document.querySelectorAll("#header-editor>span");
+        for (let i=0; i<spans.length; i++){
+            if ($(spans[i]).is(".active")){
+                let editor = KB_GLOBAL_VAR["editors"][i];
+                let value = editor.getValue();
+                return {
+                    "script": value,
+                    "limit": $("#limit-size").val(),
+                    "target": i
+                };
+            }
+        }
+    }
+    function auto_save_temp(force){
+
+    }
+    function stop_running(running_id){
+
+    }
+    $("#new-temp-file").click(()=>{
+        open_file();
+        //$("#header-editor>span.active").addClass("modify");
+        auto_save_temp();
+    });
+
+    $("#header-editor").on("click", "span", (e)=>{
+        let target = e.currentTarget;
+        if ($(target).is("#header-editor>span")){
+            if ($(target).is(".active")) return;
+            let last_editor_opened = $("#header-editor>span.active").removeClass("active");
+            $(target).addClass("active");
+            let spans = document.querySelectorAll("#header-editor>span");
+            let editor_frame = document.querySelectorAll("#scripts-editor .kb-editor");
+            if ($(target).is(".running")){
+                $("#manual-run, #limit-container").hide();
+                $("#stop-running, #running-loader").show();
+            }else{
+                $("#manual-run, #limit-container").show();
+                $("#stop-running, #running-loader").hide();
+            }
+            for (let i=0; i<spans.length; i++){
+                if (spans[i] == target){
+                    let editor = KB_GLOBAL_VAR["editors"][i];
+                    let retrieve_data = KB_GLOBAL_VAR["data"][i]
+                    $("#scripts-editor .kb-editor.active").removeClass("active");
+                    $(editor_frame[i]).addClass("active");
+                    editor.focus();
+                    return;
+                }
+            }
+
+        }else if ($(target).is("#header-editor>span>span")){
+            // click on the close cross of the tab
+            target = e.currentTarget.parentNode;
+            let spans = document.querySelectorAll("#header-editor>span");
+            let editor_frame = document.querySelectorAll("#scripts-editor .kb-editor");
+
+            for (let i=0; i<spans.length; i++){
+                if (spans[i] == target){
+
+                    if ($(spans[i]).hasClass("running")){
+                        stop_running(null);
+                    }
+                    KB_GLOBAL_VAR["data"].splice(i,1)
+                    let editor = KB_GLOBAL_VAR["editors"].splice(i,1)[0];
+                    editor.getModel().dispose();
+                    editor_frame[i].remove();
+                    break;
+                }
+            }
+            target.remove();
+            if ($(target).is(".active")){
+                let first = $("#header-editor>span").get(0);
+                if (!first){
+                    $("#new-temp-file").click();
+                    first = $("#header-editor>span").get(0);
+                }
+                first.click();
+            }
+            auto_save_temp(true);
+        }
+    });
+</script>
+
+<!-- resize frame gestion -->
+<script>
+    // resize the frame
+    $(document).ready(()=>{
+        var dx;
+        $("body").on("mousedown", "#resize-frame, #overview thead tr th .resizable, #overview-head .resizable", (e)=>{
+                let target = e.currentTarget;
+                dx = e.clientX;
+                $(".is_dragging").removeClass("is_dragging");
+                $(target).addClass("is_dragging");
+                //e.stopPropagation();
+            });
+
+        $("body").on("mousemove", (e)=>{
+                let target = $(".is_dragging").get(0);
+                if (!target) return;
+                if ($(target).is("#overview thead tr th span")){
+                    // resizing of overview table
+                    let div = target.previousSibling;
+                    var deltaX = e.clientX - dx;
+                    let column = div.parentNode.cellIndex + 1;
+                    deltaX = $(div.parentNode).width() + deltaX;
+                    $("#overview tr td:nth-child("+column+") div").css("width",deltaX+"px");
+                    $(div).css("width",deltaX+"px");
+
+                    // relance
+                    dx = e.clientX;
+                }else if ($(target).is("#overview-head .resizable")){
+                    let col_index = parseInt($(target.parentNode).attr("data-col-index")) - 1;
+                    OVERVIEW_WIDTH[col_index] = e.clientX - dx + $(target).position().left + 5;
+
+                    $(target).css("left", e.clientX - dx + $(target).position().left);
+                    // relance
+                    dx = e.clientX;
+                }else{
+                    // resizing of script frame
+                    dx = e.clientX - dx;
+                    let last_width = parseFloat(document.querySelector("#tree-frame").style.width.split("px")+" ");
+                    let width = last_width + dx;
+                    $("#tree-frame").css("width", width+ "px");
+
+                    $("#tree-view #hovered-element").css("width", document.querySelector("#tree-view").scrollWidth);
+                    // relance
+                    dx = e.clientX;
+                }
+            })
+            .on("mouseup", (e)=>{
+                dx = 0;
+                let target = document.querySelector(".is_dragging");
+                $(".is_dragging").removeClass("is_dragging");
+                if (target === null) return;
+                if ($(target).is("#overview-head .resizable")){
+                    OVERVIEW_WIDTH_CUMUL = [0];
+                    for (let col_index=0; col_index<OVERVIEW_WIDTH.length; col_index++){
+                        OVERVIEW_WIDTH_CUMUL.push(OVERVIEW_WIDTH_CUMUL[col_index]+OVERVIEW_WIDTH[col_index]);
+                    }
+                    $("#overview-table").css("width", OVERVIEW_WIDTH.reduce((d, last)=>d+last) + "px")
+                            .css("height", ((DATA_CURSOR.large.length + 1)*CELL_HEIGHT) + "px");
+                    update_overview_frame();
+
+                }
+
+            })
+
+
+    });
+</script>
+
+<script>
+     $(document).click((e)=>{
+       let target = e.target;
+       pop_up = where_is_click_on(e, [".kb-pop-up", "[data-pop-up-opener-id]"] , retrieve=true);
+       let pop_up_sel = ".kb-pop-up";
+       if ($(pop_up).is("[data-pop-up-opener-id]") && $(pop_up).attr("data-pop-up-opener-id")){
+            pop_up_sel += ":not(" + $(pop_up).attr("data-pop-up-opener-id")+ ")";
+       }else if($(pop_up).is(".kb-pop-up")){
+            pop_up_sel += ":not(#" + pop_up.id + ")";
+       }
+       $(pop_up_sel).addClass('hidden');
+    });
+
+    $("#info-bar").click(()=>{
+        if ($("#script-result").hasClass("fixed") || !$("#script-result>div:first-child").hasClass("hidden")) return;
+
+        $("#overview-frame").removeClass("hidden");
+        $("#overview-menu>span").get(0).click();
+
+    });
+    $("#stick-overview").click(()=>{
+        $("#overview-frame").toggleClass("kb-pop-up");
+        $("#stick-overview").toggleClass("active");
+        if ($("#stick-overview").is(".active")){
+            $("#scripts-editor").height($("#editor-frame").height() - $("#overview-frame").height()-50);
+        }else{
+            $("#scripts-editor").css("height", 'calc(100% - 50px)');
+        }
+    });
+
+    function manual_run(extract){
+        let res = get_open_file_info();
+        let target = res.target;
+        $(document.querySelectorAll("#header-editor>span")[target]).addClass("running");
+        delete res.target;
+        res.extract = extract? "extract": "";
+        console.log(res);
+        //$("#voile").removeClass("hidden").fadeIn(100).addClass("lock");
+        $("#manual-run, #limit-container").hide();
+        $("#stop-running, #running-loader").removeClass("hidden").show();
+        fetch("{{ base_api }}/run-script", {
+            method: "POST",
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify(res)
+        }).then((response)=>{
+
+            $(document.querySelectorAll("#header-editor>span")[target]).removeClass("running");
+            if (res.extract) res.blob();
+            return response.json();
+        }).then(data=>{
+            let page = $(document.querySelectorAll("#header-editor>span")[target]);
+
+            if (!data.ok) return new KBNotificator().notify({"title": "Erreur", message: data.error_msg}, "e", 5)
+            console.log(data);
+            KB_GLOBAL_VAR["data"][target] = [data.columns].concat(data.data)
+            //if (res.extract)
+            if (!page.is("active")) return page.addClass("finish");
+
+            $("#manual-run, #limit-container").show();
+            $("#stop-running, #running-loader").hide();
+            $("#info-bar").click();
+
+
+            draw_table(target);
+        })
+    }
+
+
+ </script>
+
+<script>
+    function draw_table(target){
+        // sql script overview
+        data = KB_GLOBAL_VAR["data"][target]
+        $("#overview thead").html("<tr><th class='row-indexes' style='background:#eee; border-left: thin solid #ccc'>&nbsp;</th></tr>");
+        ((data || []).shift() || []).forEach((cell, i)=>{
+            if (i<MAX_NUMBER_COLUMN)
+            $("#overview thead tr").append(`<th title="${cell}"><div>${cell}</div><span class="resizable"></span><span class="filter-col">&#9660;</span></th>`);
+        });
+        (data || []).forEach((row, index)=>{
+            let tr = document.createElement("tr");
+            $(tr).append("<td class='row-indexes'>"+(index+1)+"</td>");
+            (row || []).forEach((cell, cell_index)=>{
+                if (cell_index <MAX_NUMBER_COLUMN ){
+                    let th_head = $("#overview thead tr").get(0).children[cell_index+1];
+                    let w = 10 * Math.min(Math.max($(th_head).find("div").get(0).innerText.length, (data[0][cell_index] + "").length), 20);
+                    w = Math.max(w, 20);
+
+                    $(tr).append(`<td nowrap><div style="width:${w}px;">${cell}</div></td>`);
+                }
+            });
+            $("#overview tbody").append(tr);
+        });
+    }
+</script>
+
+{% endblock %}

@@ -19,15 +19,43 @@
     <script src="{{ url_for('static', filename='js/datetime-fr.js') }}"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 
+
+    <!-- MONACO CSS -->
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="{{ url_for('static', filename='js') }}/monaco-editor/min/vs/editor/editor.main.css">
+    <script>var require = { paths: { 'vs': "{{ url_for('static', filename='js') }}/monaco-editor/min/vs" } };</script>
+    <script src="{{ url_for('static', filename='js') }}/monaco-editor/min/vs/loader.js"></script>
+    <script src="{{ url_for('static', filename='js') }}/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script src="{{ url_for('static', filename='js') }}/monaco-editor/min/vs/editor/editor.main.js"></script>
+
+
     <style>
-        body, html{border: none; width: 100%; height: 100%}
+        body, html{border: none; width: 100%; height: 100%; --sgci-blue: #020235;}
+        .hidden{
+            display: none!important;
+        }
+        #voile{
+            display: none;
+            background: #5559;
+            width: 100%;
+            height: 100%;
+            position: fixed; z-index: 10000; top: 0; left: 0
+        }
     </style>
 </head>
 <body>
-    <div id="voile">{% block voile %}{% endblock %}</div>
+    <div id="voile">{% block voile %}
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center">
+            <img src="{{ url_for('static', filename='images/loaders/loader.gif') }}" width="100"/>
+        </div>
+        {% endblock %}</div>
     <script>
         var ctrlDown = false;
         var shiftDown = false;
+
+        var LOADER = {
+            show: (duration=500)=>$("#voile").fadeIn(duration),
+            hide: (duration=500)=>$("#voile").fadeOut(duration)
+        };
 
         function where_is_click_on(event, elm, retrieve=false){
             let target = event.target;

@@ -8,6 +8,7 @@ from PIL import Image
 
 from kb_package.tools import Cdict
 
+
 APP = Flask(__name__, template_folder="templates", static_folder="static")
 
 
@@ -172,4 +173,7 @@ def auto_detect_receipt_date(d):
 
 if __name__ == '__main__':
     # https://www.pinterest.fr/pin/794533559274214883/
+    from admin import CustomAdmin
+    brand = r"C:\Users\DEL\PycharmProjects\pythonProject\page-test\web\static\images\sentinelle_ico.png"
+    CustomAdmin(app_name="Sentinelle", app_brand=brand).install(APP)
     APP.run(debug=True)

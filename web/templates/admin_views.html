@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+  #notify .badge{
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: red;
+    font-size: 0.5rem;
+    color: #fff;
+  }
+  #application-container{
+    display: flex;
+    margin-top: 50px;
+  }
+  #application-container .application-item:after{
+    content: "";
+
+    height: var(--deep); width: 95%; border-radius: calc(var(--deep) / 2) calc(var(--deep) / 2) 0 0;
+    position: absolute; top: calc(-1 * var(--deep));
+    background: #faa9;
+    border: thin solid #aaa9;
+  }
+  #application-container .application-item:before{
+    content: "";
+
+    height: var(--deep); width: 90%; border-radius: calc(var(--deep) / 2) calc(var(--deep) / 2) 0 0;
+    position: absolute; top: calc(-2 * var(--deep));
+    background: #faa3;
+    border: thin solid #aaa5;
+  }
+  #application-container .application-item{
+    --deep: 10px;
+    border: thin solid #aaa;
+    border-radius: 5px;
+    padding: 20px;
+    display: flex; justify-content: center;
+    max-width: 40%; min-height: 250px;
+    cursor: pointer;
+    background: var(--dark);
+    position: relative;
+    margin-right: 50px; margin-bottom: 50px;
+    color: #fff;
+    transition-duration: 300ms;
+
+
+  }
+  #application-container .application-item .title{
+    font-weight: 1000;
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  #application-container .application-item, #application-container .application-item *{
+    text-decoration:none!important;
+  }
+  #application-container .application-item>div:first-child{
+    margin-right: 20px;
+  }
+  #application-container .application-item .content{
+    font-size: 1rem;
+  }
+  #application-container .application-item:hover{
+    transform: scale(1.05);
+  }
+</style>
+<div style="width: 100%; height: 100%; padding: 10px;">
+  <div style="background: #0001; border-radius: 5px;  width: 100%; height: 100%; padding: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: thin solid #aaa; padding-bottom: 10px;">
+      <div>
+        <span>
+          <img src="{{ url_for('static', filename='images/sentinelle_ico.png') }}" width="30">
+        </span>
+        <span>Sentinelle</span>
+      </div>
+      <div style="display: flex; --size: 30px; align-items: center;">
+        <div id="notify" style="margin-right: 10px; position: relative">
+          <svg style="width: var(--size); height: var(--size);" fill="#000000" viewBox="0 0 448 512">
+            <path d="M222.987,510c31.418,0,57.529-22.646,62.949-52.5H160.038C165.458,487.354,191.569,510,222.987,510z"/>
+            <path d="M432.871,352.059c-22.25-22.25-49.884-32.941-49.884-141.059c0-79.394-57.831-145.269-133.663-157.83h
+                    -4.141 c4.833-5.322,7.779-12.389,7.779-20.145c0-16.555-13.42-29.975-29.975-29.975s-29.975,13.42-29.975,
+                    29.975 c0,7.755,2.946,14.823,7.779,20.145h-4.141C120.818,65.731,62.987,131.606,62.987,211c0,108.118
+                    -27.643,118.809-49.893,141.059 C-17.055,382.208,4.312,434,47.035,434H398.93C441.568,434,463.081,
+                    382.269,432.871,352.059z"/>
+          </svg>
+          <span class="badge">0</span>
+        </div>
+        <div style="border-radius: 50%;  height: var(--size); width: var(--size); background: #fff; box-shadow: 3px 0px 3px #ccc"></div>
+      </div>
+    </div>
+
+    <div class="container" style="padding-top: 50px;">
+      <h4>Application Disponibles</h4>
+      <small style="position: relative; top: -10px;">Selon votre profil la liste des applications permise</small>
+
+      <div id="application-container">
+
+        <a href="{{ base_web }}/Habilitation" class="application-item">
+          <div>
+            <div class="title">
+              Habilitation
+            </div>
+            <div class="content">
+              Créer de nouveaux utilisateurs, gérer leurs rôles, modifier supprimer
+            </div>
+          </div>
+          <div>
+            <img src="{{ url_for('static', filename='images/habilitation.svg') }}" width="100">
+          </div>
+
+        </a>
+
+        <a href="{{ base_web }}/Console" class="application-item">
+          <div>
+            <div class="title">
+              Console
+            </div>
+            <div class="content">
+              Effectuer des requêtes en base de données, Visualisez les résultats, Exporter des données
+            </div>
+          </div>
+          <div>
+            <img src="{{ url_for('static', filename='images/script.svg') }}" width="100">
+          </div>
+
+        </a>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
