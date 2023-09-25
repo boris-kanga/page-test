@@ -340,16 +340,6 @@
 
     }
 
-    #overview div{
-        overflow: hidden;
-        height: 30px;
-        margin: 0px;
-        padding: 0px;
-        display:block;
-        font-size: 12px;
-        text-overflow: ellipsis;
-    }
-
     #overview td div, #overview th div{
       border: 0;
       min-height: 20px!important;
@@ -358,7 +348,7 @@
       -ms-user-select: all;
       user-select: all;
     }
-    #overview td div{font-weight: 200;}
+    #overview div{font-weight: 200;}
     .row-indexes{
         font-size: 8px;
         color: #aaa;
@@ -370,9 +360,7 @@
         vertical-align: bottom;
     }
     #python-output .row-indexes{ background: transparent; color: var(--orange);}
-    #overview tbody tr:nth-child(even) {
-      background-color: var(--green-light);
-    }
+
     #overview tbody tr:nth-child(odd) {
       background-color: #fff;
     }
@@ -459,8 +447,8 @@
         cursor: default;
     }
     #stick-overview.active{
-        background: var(--kb-orange-light)!important;
-        border-color: var(--kb-orange-light)!important;
+        background: var(--sgci-red)!important;
+        border-color: var(--sgci-red)!important;
     }
     #overview-menu{
         display: flex;
@@ -498,6 +486,21 @@
     }
     .log-container .warning{ background: gold; color: #000}
     .log-container .info {background: var(--primary); color: #fff}
+</style>
+
+<style>
+    #overview div{
+        overflow: hidden;
+        height: 30px;
+        margin: 0px;
+        padding: 0px;
+        display:block;
+        text-overflow: ellipsis;
+        font-size: 0.90rem;
+    }
+    #overview tbody tr:nth-child(even) {
+      background-color: #e4fafa;
+    }
 </style>
 <div class="main" style="height: 100%">
     <div id="btn-controller"
@@ -591,7 +594,7 @@
                                 </div>
                                 <div id="overview-output" class="hide-scroll" style="--s-width: 10px; position: relative; height: calc(100% - 25px); border: 5px ridge #eee;">
                                     <table id="python-output"></table>
-                                    <table id="overview">
+                                    <table id="overview" style="font-size: 0.85rem; font-weight: 200">
                                         <thead></thead>
                                         <tbody></tbody>
                                     </table>
@@ -788,7 +791,7 @@
             for (let i=0; i<spans.length; i++){
                 if (spans[i] == target){
                     let editor = KB_GLOBAL_VAR["editors"][i];
-                    let retrieve_data = KB_GLOBAL_VAR["data"][i]
+                    draw_table(i)
                     $("#scripts-editor .kb-editor.active").removeClass("active");
                     $(editor_frame[i]).addClass("active");
                     editor.focus();
@@ -953,7 +956,7 @@
             console.log(data);
             KB_GLOBAL_VAR["data"][target] = [data.columns].concat(data.data)
             //if (res.extract)
-            if (!page.is("active")) return page.addClass("finish");
+            if (!page.is(".active")) return page.addClass("finish");
 
             $("#manual-run, #limit-container").show();
             $("#stop-running, #running-loader").hide();
@@ -964,13 +967,19 @@
         })
     }
 
-
  </script>
 
 <script>
+
     function draw_table(target){
         // sql script overview
-        data = KB_GLOBAL_VAR["data"][target]
+        $("#overview tbody").html("");
+        $("#overview thead").html("");
+        let data = KB_GLOBAL_VAR["data"][target];
+        if (data === null) return;
+        data = Object.assign([], data);
+        console.log(data);
+        $("#overview tbody").html("");
         $("#overview thead").html("<tr><th class='row-indexes' style='background:#eee; border-left: thin solid #ccc'>&nbsp;</th></tr>");
         ((data || []).shift() || []).forEach((cell, i)=>{
             if (i<MAX_NUMBER_COLUMN)
@@ -990,7 +999,41 @@
             });
             $("#overview tbody").append(tr);
         });
+        console.log(KB_GLOBAL_VAR["data"][target]);
     }
+</script>
+
+<script>
+    function selectElementContents(el, clean_before=true) {
+        var body = document.body, range, sel;
+        if (document.createRange && window.getSelection) {
+            range = document.createRange();
+            sel = window.getSelection();
+            if (clean_before) sel.removeAllRanges();
+            try {
+                range.selectNodeContents(el);
+                sel.addRange(range);
+            } catch (e) {
+                range.selectNode(el);
+                sel.addRange(range);
+            }
+        } else if (body.createTextRange) {
+            range = body.createTextRange();
+            range.moveToElementText(el);
+            range.select();
+        }
+    }
+    $("#overview").on("click", ".row-indexes", (e)=>{
+        let row_index = e.currentTarget.parentNode.rowIndex;
+        let target = null;
+        let add = true;
+        if (row_index === 0) target = document.querySelector("#overview");
+        else{
+            add = !ctrlDown;
+            target = document.querySelector("#overview tbody tr:nth-child(" + row_index + ")");
+        }
+        selectElementContents(target, add);
+    });
 </script>
 
 {% endblock %}

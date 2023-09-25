@@ -61,6 +61,102 @@
         </svg>
     </div>
 </object>
+<style>
+    #new-user-container{
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;z-index: 100;
+        background: #555A;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--sgci-blue);
+    }
+    #new-user{
+        background: #fff;
+        position: relative;
+        border-radius: 3px;
+        display: flex; flex-direction: column;
+        overflow: hidden;
+
+    }
+    #new-user label{
+        margin: 0;
+        font-size: .6rem;
+        background: var(--sgci-blue);
+        color: #fff;
+        position: relative; top: 2px; left: 5px;
+        padding: 0 10px;
+        border-radius: 5px 5px 0 0;
+    }
+
+    #new-user .title, #new-user .footer{
+        background: #eee;
+        position: relative;
+    }
+    #new-user>div{
+        padding: 10px;
+        width: 100%;
+        flex: 1 1 auto;
+    }
+    #new-user h5{margin: 0}
+    #new-user .cross{
+        position: absolute; top: 10px; right: 10px;
+        color: red;
+    }
+    #new-user .content{
+        border-top: thin solid #ccc;
+    }
+</style>
+<div id="new-user-container">
+    <div id="new-user">
+        <div class="title">
+            <h5>Nouvel Utilisateur</h5>
+            <span class="cross">&cross;</span>
+        </div>
+
+        <div class="content" style="padding: 10px 20px;">
+            <div style="display: flex; align-items: center;">
+                <div>
+                    <div>
+                        <label>Matricule</label>
+                        <input placeholder="Matricule" class="form-control">
+                    </div>
+                    <div>
+                        <label>Nom</label>
+                        <input placeholder="Nom" class="form-control">
+                    </div>
+
+                </div>
+                <div style=" padding-top: 20px; width: 120px; height: 120px; display: flex; justify-content: center; align-items: center;">
+                    <div style="background:var(--sgci-blue); color: #fff; width: 100px; height: 100px; border-radius: 50%; border: 5px double #fff;">
+
+                    </div>
+
+                </div>
+
+            </div>
+            <div>
+                <label>Prénom(s)</label>
+                <input type="email" placeholder="Prénom(s)" class="form-control">
+            </div>
+
+            <div>
+                <label>Email</label>
+                <input placeholder="Email" class="form-control">
+            </div>
+
+            <div>
+                <label>Roles</label>
+                <input placeholder="Roles" class="form-control">
+            </div>
+
+            <div style="border: thin dashed var(--sgci-blue); border-radius: 5px; display: flex; align-items: center; justify-content: center; margin-top: 20px; cursor: pointer;">
+                Fiche d'habilitation
+            </div>
+        </div>
+
+        <div class="footer" style="margin-top: 10px;">
+            <a class="btn btn-warning">Confirmer</a>
+        </div>
+    </div>
+</div>
 <div class="main" style="height: 100%">
     <div style="width: 100%; height: 40px; background: var(--dark); position: relative">
         <a style="padding: 10px; text-decoration: none; color: #eee; font-size: .7rem; display: flex; align-items: center" href="/" >

@@ -30,13 +30,16 @@
     background: #faa3;
     border: thin solid #aaa5;
   }
+
+
   #application-container .application-item{
     --deep: 10px;
     border: thin solid #aaa;
     border-radius: 5px;
     padding: 20px;
     display: flex; justify-content: center;
-    max-width: 40%; min-height: 250px;
+
+    min-height: 250px;
     cursor: pointer;
     background: var(--dark);
     position: relative;
@@ -46,6 +49,7 @@
 
 
   }
+
   #application-container .application-item .title{
     font-weight: 1000;
     font-size: 20px;
@@ -62,6 +66,14 @@
   }
   #application-container .application-item:hover{
     transform: scale(1.05);
+  }
+</style>
+
+<style>
+  @media screen and (min-width: 992px) {
+    #application-container .application-item{
+        max-width: 40%;
+    }
   }
 </style>
 <div style="width: 100%; height: 100%; padding: 10px;">
@@ -89,11 +101,11 @@
       </div>
     </div>
 
-    <div class="container" style="padding-top: 50px;">
+    <div class="container hide-scroll" style="padding-top: 50px; max-height: calc(100% - 33px)">
       <h4>Application Disponibles</h4>
       <small style="position: relative; top: -10px;">Selon votre profil la liste des applications permise</small>
 
-      <div id="application-container">
+      <div id="application-container" style="flex-wrap: wrap">
 
         <a href="{{ base_web }}/Habilitation" class="application-item">
           <div>
@@ -121,6 +133,21 @@
           </div>
           <div>
             <img src="{{ url_for('static', filename='images/script.svg') }}" width="100">
+          </div>
+
+        </a>
+
+        <a href="{{ base_web }}/Notification" class="application-item">
+          <div>
+            <div class="title">
+              Notification & Alerte
+            </div>
+            <div class="content">
+              Envoyer des mails, des alertes aux utilisateurs. Consulter les alertes déjà envoyées.
+            </div>
+          </div>
+          <div>
+            <img src="{{ url_for('static', filename='images/mail.svg') }}" width="100">
           </div>
 
         </a>
